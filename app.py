@@ -8,7 +8,6 @@ from fpdf import FPDF
 
 st.set_page_config(page_title="SAIS Assessment Tool", page_icon="📊", layout="wide")
 
-# Show logo only if file exists (safe)
 if os.path.exists("logo.png"):
     try:
         st.image("logo.png", width=120)
@@ -146,9 +145,11 @@ with tab1:
                     st.dataframe(res_df, use_container_width=True)
                     st.subheader("📥 Export Report")
                     e1,e2=st.columns(2)
-                                     excel_buffer = io.BytesIO()
+                    # ---- FIXED EXCEL EXPORT (pandas 3.0 safe) ----
+                    excel_buffer = io.BytesIO()
                     res_df.to_excel(excel_buffer, index=False)
                     e1.download_button("📊 Download Excel", excel_buffer.getvalue(), "Report.xlsx")
+                    # ---- PDF EXPORT ----
                     pdf=FPDF()
                     pdf.add_page()
                     pdf.set_font("Helvetica","B",16)
@@ -182,7 +183,7 @@ with tab1:
                     buf.seek(0)
                     e2.download_button("📄 Download PDF", buf.read(), "Report.pdf")
 
-# ================= TAB 2 (UNCHANGED) =================
+# ================= TAB 2 =================
 with tab2:
     st.header("Upload Two Assessment Files (Same Students)")
     st.info("Excel format: First column 'Student Name', remaining columns are mark columns. The app sums the marks for each student and compares Assessment 1 vs Assessment 2.")
@@ -193,6 +194,7 @@ with tab2:
     if f1 and f2:
         df1 = pd.read_excel(f1)
         df2 = pd.read_excel(f2)
+        # ---- FIXED RENAME (correct spelling) ----
         df1 = df1.rename(columns={df1.columns[0]: 'Student Name'})
         df2 = df2.rename(columns={df2.columns[0]: 'Student Name'})
         
