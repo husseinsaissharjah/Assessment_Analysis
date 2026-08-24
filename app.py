@@ -3,10 +3,21 @@ import pandas as pd
 import plotly.express as px
 import plotly.io as pio
 import io
+import os
 from fpdf import FPDF
 
-st.set_page_config(page_title="Assessment Analyzer", layout="wide")
-st.title("📊 Student Assessment Analysis Tool")
+# Use logo if available in repo
+logo_path = "logo.png" if os.path.exists("logo.png") else None
+
+st.set_page_config(
+    page_title="SAIS Assessment Tool",
+    page_icon=logo_path if logo_path else "📊",
+    layout="wide"
+)
+
+if logo_path:
+    st.image(logo_path, width=120)
+st.title("📊 SAIS Student Assessment Analysis Tool")
 
 COLORS = {
     'Absent': '#808080', 'Fail': '#d62728', 'Acceptable': '#ff7f0e',
@@ -16,7 +27,7 @@ ORDER = ['Absent', 'Fail', 'Acceptable', 'Good', 'Very Good', 'Outstanding']
 
 tab1, tab2 = st.tabs(["📊 Single Assessment Analysis", "🔄 Comparison (2 Assessments)"])
 
-# ================= TAB 1: ORIGINAL TOOL =================
+# ================= TAB 1 =================
 with tab1:
     st.header("Step 1: Define Assessment Structure")
     n_obj = st.number_input("🔢 Number of objectives", min_value=1, max_value=30, value=3, step=1, key="n1")
@@ -33,11 +44,29 @@ with tab1:
     st.info(f"📋 Auto Total Max Mark = **{total_max}**")
 
     st.header("Step 2: Upload Student Marks Excel")
-    st.info("Excel: First column 'Student Name', then ONE column per objective (actual marks only).")
+    st.info("Excel: Row 1 = Info (Teacher/Class/Date/Assessment). Row 2 = Headers (Student Name + Objectives). Row 3+ = Marks.")
     up_file = st.file_uploader("Upload Excel", type=["xlsx", "xls"], key="single")
 
     if up_file:
-        df = pd.read_excel(up_file)
+        # --- Read metadata from Row 1 ---
+        meta_raw = pd.read_excel(up_file, nrows=1, header=None)
+        up_file.seek(0)
+        meta_info = {}
+        for c in meta_raw.columns:
+            val = str(meta_raw.iloc[0, c]).strip()
+            if ':' in val:
+                k, v = val.split(':', 1)
+                meta_info[k.strip()] = v.strip()
+
+        st.subheader("📋 Assessment Information")
+        mi1, mi2, mi3, mi4 = st.columns(4)
+        mi1.markdown(f"**👩‍🏫 Teacher:** {meta_info.get('Teacher Name', 'N/A')}")
+        mi2.markdown(f"**🏫 Class:** {meta_info.get('Class', 'N/A')}")
+        mi3.markdown(f"**📅 Date:** {meta_info.get('Date', 'N/A')}")
+        mi4.markdown(f"**📝 Assessment:** {meta_info.get('Assessment name', 'N/A')}")
+
+        # --- Read actual data from Row 2 as header ---
+        df = pd.read_excel(up_file, header=1)
         if df.shape[1] < int(n_obj) + 1:
             st.error(f"❌ Excel needs Student Name + {int(n_obj)} marks. Found {df.shape[1]-1}.")
         else:
@@ -127,14 +156,23 @@ with tab1:
                     pdf.set_font("Helvetica","B",16)
                     pdf.cell(0,10,"Assessment Report",ln=True)
                     pdf.set_font("Helvetica","",12)
+                    # Clean metadata for PDF
+                    tn = meta_info.get('Teacher Name','').encode('ascii','ignore').decode('ascii')
+                    cl = meta_info.get('Class','').encode('ascii','ignore').decode('ascii')
+                    dt = meta_info.get('Date','').encode('ascii','ignore').decode('ascii')
+                    an = meta_info.get('Assessment name','').encode('ascii','ignore').decode('ascii')
+                    pdf.cell(0,10,f"Teacher: {tn}",ln=True)
+                    pdf.cell(0,10,f"Class: {cl}",ln=True)
+                    pdf.cell(0,10,f"Date: {dt}",ln=True)
+                    pdf.cell(0,10,f"Assessment: {an}",ln=True)
                     pdf.cell(0,10,f"Overall: {overall_clean}",ln=True)
-                    pdf.cell(0,10,f"Total: {ts}",ln=True)
+                    pdf.cell(0,10,f"Total Students: {ts}",ln=True)
                     pdf.ln(5)
                     ib=pio.to_image(fb,format="png",width=400,height=300)
                     ip=pio.to_image(fp,format="png",width=400,height=300)
-                    pdf.image(io.BytesIO(ib),x=10,y=45,w=90)
-                    pdf.image(io.BytesIO(ip),x=110,y=45,w=90)
-                    pdf.ln(100)
+                    pdf.image(io.BytesIO(ib),x=10,y=70,w=90)
+                    pdf.image(io.BytesIO(ip),x=110,y=70,w=90)
+                    pdf.ln(120)
                     pdf.set_font("Helvetica","B",10)
                     pdf.cell(40,8,"Level",border=1)
                     pdf.cell(40,8,"Count",border=1,ln=True)
@@ -147,7 +185,7 @@ with tab1:
                     buf.seek(0)
                     e2.download_button("📄 Download PDF", buf.read(), "Report.pdf")
 
-# ================= TAB 2: COMPARISON TOOL (FIXED) =================
+# ================= TAB 2 (UNCHANGED) =================
 with tab2:
     st.header("Upload Two Assessment Files (Same Students)")
     st.info("Excel format: First column 'Student Name', remaining columns are mark columns. The app sums the marks for each student and compares Assessment 1 vs Assessment 2.")
