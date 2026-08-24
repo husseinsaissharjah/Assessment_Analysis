@@ -6,17 +6,15 @@ import io
 import os
 from fpdf import FPDF
 
-# Use logo if available in repo
-logo_path = "logo.png" if os.path.exists("logo.png") else None
+st.set_page_config(page_title="SAIS Assessment Tool", page_icon="📊", layout="wide")
 
-st.set_page_config(
-    page_title="SAIS Assessment Tool",
-    page_icon=logo_path if logo_path else "📊",
-    layout="wide"
-)
+# Show logo only if file exists (safe)
+if os.path.exists("logo.png"):
+    try:
+        st.image("logo.png", width=120)
+    except Exception:
+        pass
 
-if logo_path:
-    st.image(logo_path, width=120)
 st.title("📊 SAIS Student Assessment Analysis Tool")
 
 COLORS = {
@@ -44,11 +42,10 @@ with tab1:
     st.info(f"📋 Auto Total Max Mark = **{total_max}**")
 
     st.header("Step 2: Upload Student Marks Excel")
-    st.info("Excel: Row 1 = Info (Teacher/Class/Date/Assessment). Row 2 = Headers (Student Name + Objectives). Row 3+ = Marks.")
+    st.info("Excel: Row 1 = Info (Teacher/Class/Date/Assessment). Row 2 = Headers. Row 3+ = Marks.")
     up_file = st.file_uploader("Upload Excel", type=["xlsx", "xls"], key="single")
 
     if up_file:
-        # --- Read metadata from Row 1 ---
         meta_raw = pd.read_excel(up_file, nrows=1, header=None)
         up_file.seek(0)
         meta_info = {}
@@ -65,7 +62,6 @@ with tab1:
         mi3.markdown(f"**📅 Date:** {meta_info.get('Date', 'N/A')}")
         mi4.markdown(f"**📝 Assessment:** {meta_info.get('Assessment name', 'N/A')}")
 
-        # --- Read actual data from Row 2 as header ---
         df = pd.read_excel(up_file, header=1)
         if df.shape[1] < int(n_obj) + 1:
             st.error(f"❌ Excel needs Student Name + {int(n_obj)} marks. Found {df.shape[1]-1}.")
@@ -156,7 +152,6 @@ with tab1:
                     pdf.set_font("Helvetica","B",16)
                     pdf.cell(0,10,"Assessment Report",ln=True)
                     pdf.set_font("Helvetica","",12)
-                    # Clean metadata for PDF
                     tn = meta_info.get('Teacher Name','').encode('ascii','ignore').decode('ascii')
                     cl = meta_info.get('Class','').encode('ascii','ignore').decode('ascii')
                     dt = meta_info.get('Date','').encode('ascii','ignore').decode('ascii')
