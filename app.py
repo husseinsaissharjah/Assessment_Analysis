@@ -17,7 +17,9 @@ st.title("📊 SAIS Analyzer")
 COLORS = {'Absent':'#808080','Fail':'#d62728','Acceptable':'#ff7f0e','Good':'#2ca02c','Very Good':'#1f77b4','Outstanding':'#9467bd'}
 ORDER = ['Absent','Fail','Acceptable','Good','Very Good','Outstanding']
 
-# ---------- Helper for Tab 1 & 2 (objectives) ----------
+# ==========================================
+# HELPER A: OBJECTIVES LOGIC (for Tab 1 & 2)
+# ==========================================
 def read_meta_and_pct(f):
     meta_raw = pd.read_excel(f, nrows=1, header=None)
     f.seek(0)
@@ -42,7 +44,9 @@ def read_meta_and_pct(f):
     df['Pct'] = (df['Obtained'] / total_max * 100).round(1) if total_max else 0.0
     return meta_info, df
 
-# ---------- Helper for Tab 3 (Total column only) ----------
+# ==========================================
+# HELPER B: TOTAL LOGIC (for Tab 3 ONLY)
+# ==========================================
 def read_internal_external(f):
     raw = pd.read_excel(f, header=None)
     meta_info = {}
@@ -75,24 +79,24 @@ def read_internal_external(f):
     data['Pct'] = (data[total_col] / max_total * 100).round(1) if max_total else 0.0
     return meta_info, data
 
-# ---------- Helper for cell color ----------
 def color_cell(v):
     if v == 'Growth': return 'background-color: green; color: white'
     if v == 'Decay': return 'background-color: red; color: white'
     if v == 'Same': return 'background-color: yellow'
     return ''
 
-# ---------- Tabs ----------
 tab1, tab2, tab3 = st.tabs([
     "📊 Single Assessment Analysis",
     "🔄 Comparison (Multiple Assessments)",
     "🆚 Internal vs External"
 ])
 
-# ================= TAB 1 =================
+# ==========================================
+# TAB 1 (OBJECTIVES - UNCHANGED)
+# ==========================================
 with tab1:
     st.header("Step 1: Upload Student Marks Excel")
-    st.info("Row1: Info (Teacher/Class/Date/Assessment/Subject) | Row2: Headers | Row3: 'Points for Objectives' + max marks | Row4+: Marks.")
+    st.info("Row1: Info | Row2: Headers | Row3: 'Points for Objectives' + max marks | Row4+: Marks.")
     up_file = st.file_uploader("Upload Excel", type=["xlsx", "xls"], key="single")
     if up_file:
         meta_raw = pd.read_excel(up_file, nrows=1, header=None)
@@ -187,7 +191,9 @@ with tab1:
                 eb = io.BytesIO(); rdf.to_excel(eb, index=False)
                 st.download_button("📊 Download Excel", eb.getvalue(), "Report.xlsx")
 
-# ================= TAB 2 =================
+# ==========================================
+# TAB 2 (OBJECTIVES - UNCHANGED)
+# ==========================================
 with tab2:
     st.header("Compare Multiple Assessments")
     st.info("Choose number of assessments. Upload files (same format as Tab 1). Each score → % before comparing.")
@@ -202,7 +208,7 @@ with tab2:
         pct_cols = []
         names = []
         for i, f in enumerate(files):
-            meta, df = read_meta_and_pct(f)
+            meta, df = read_meta_and_pct(f)  # <-- OBJECTIVES HELPER
             if meta is None:
                 st.error(f"❌ File {i+1} missing 'Points for Objectives' row."); st.stop()
             metas.append(meta)
@@ -250,7 +256,9 @@ with tab2:
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Comparison.xlsx")
 
-# ================= TAB 3 =================
+# ==========================================
+# TAB 3 (TOTAL - AS YOU REQUESTED)
+# ==========================================
 with tab3:
     st.header("Comparison between Internal and External Assessments")
     st.info("Upload two files. Excel: Row1 Info | Row2 Headers (Student Name, Total) | Row3: 'Total' + max mark (e.g., 40) | Row4+: marks.")
@@ -258,14 +266,14 @@ with tab3:
     f2 = st.file_uploader("📄 External Assessment", type=["xlsx", "xls"], key="extf")
 
     if f1 and f2:
-        m1, df1 = read_internal_external(f1)
+        m1, df1 = read_internal_external(f)  # <-- TOTAL HELPER
         m2, df2 = read_internal_external(f2)
         if m1 is None or m2 is None:
             st.error("❌ One of the files missing 'Total' row/max."); st.stop()
 
         st.subheader("📋 Assessment Information")
         st.markdown(f"**Internal:** 👩‍🏫 {m1.get('Teacher Name', 'N/A')} | 🏫 {m1.get('Class', 'N/A')} | 📅 {m1.get('Date', 'N/A')} | 📝 {m1.get('Assessment name', 'N/A')} | 📚 {m1.get('Subject', 'N/A')}")
-        st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A') if 'Teacher Name' in m2 else 'N/A'} | 🏫 {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')} | 📚 {m2.get('Subject', 'N/A')}")
+        st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A')} | 🏫 {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')} | 📚 {m2.get('Subject', 'N/A')}")
         st.markdown(f"### 📊 Comparing: **{m1.get('Assessment name', 'Internal')} / {m2.get('Assessment name', 'External')}**  |  📚 Subject: **{m1.get('Subject', 'N/A')}**")
 
         merged = pd.merge(
