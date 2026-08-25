@@ -44,30 +44,40 @@ def read_meta_and_pct(f):
 
 # ---------- Helper for Tab 3 (Total column only) ----------
 def read_internal_external(f):
-    meta_raw = pd.read_excel(f, nrows=1, header=None)
-    f.seek(0)
+    raw = pd.read_excel(f, header=None)
+    # Meta from row 0
     meta_info = {}
-    for c in meta_raw.columns:
-        val = str(meta_raw.iloc[0, c]).strip()
+    for c in raw.iloc[0, :]:
+        val = str(c).strip()
         if ':' in val:
             k, v = val.split(':', 1)
             meta_info[k.strip()] = v.strip()
-    df = pd.read_excel(f, header=1)
-    # Row with max total: first column contains 'Total'
-    mask = df.iloc[:, 0].astype(str).str.contains("Total", case=False, na=False)
-    if not mask.any():
+    # Headers from row 1
+    headers = [str(x).strip() for x in raw.iloc[1, :].tolist()]
+    # Find row where first column says "Total"
+    total_idx = None
+    for i in range(2, len(raw)):
+        if 'total' in str(raw.iloc[i, 0]).lower():
+            total_idx = i
+            break
+    if total_idx is None:
         return None, None
-    max_row = df[mask].iloc[0]
-    total_col = [c for c in df.columns if 'total' in str(c).lower()]
+    try:
+        max_total = float(raw.iloc[total_idx, 1])
+    except:
+        max_total = 100.0
+    # Data rows: from row 2 onward, exclude the Total row
+    data = raw.iloc[2:, :].copy()
+    data.columns = headers
+    data = data[data.iloc[:, 0].astype(str).str.lower().str.contains('total') == False]
+    data = data.rename(columns={data.columns[0]: 'Student Name'})
+    total_col = [c for c in data.columns if 'total' in str(c).lower()]
     if not total_col:
         return None, None
     total_col = total_col[0]
-    max_total = float(max_row[total_col]) if str(max_row[total_col]).strip() != '' else 100.0
-    student_df = df[~mask].copy()
-    student_df = student_df.rename(columns={student_df.columns[0]: 'Student Name'})
-    student_df[total_col] = pd.to_numeric(student_df[total_col], errors='coerce').fillna(0)
-    student_df['Pct'] = (student_df[total_col] / max_total * 100).round(1) if max_total else 0.0
-    return meta_info, student_df
+    data[total_col] = pd.to_numeric(data[total_col], errors='coerce').fillna(0)
+    data['Pct'] = (data[total_col] / max_total * 100).round(1) if max_total else 0.0
+    return meta_info, data
 
 # ---------- Cell color ----------
 def color_cell(v):
@@ -194,7 +204,6 @@ with tab2:
         merged = None
         pct_cols = []
         names = []
-        url = None
         for i, f in enumerate(files):
             meta, df = read_meta_and_pct(f)
             if meta is None:
@@ -244,17 +253,15 @@ with tab2:
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Comparison.xlsx")
 
-# ================= TAB 3 (FIXED: Total column logic) =================
+# ================= TAB 3 (FIXED Total detection) =================
 with tab3:
     st.header("Comparison between Internal and External Assessments")
-    st.info("Upload two files. Excel format: Row1 Info | Row2 Headers (Student Name, Total) | Row3: 'Total' + max mark (e.g., 40 or 100) | Row4+: marks. Scores → % before compare.")
+    st.info("Upload two files. Excel: Row1 Info | Row2 Headers (Student Name, Total) | Row3: 'Total' + max mark (e.g., 40) | Row4+: marks.")
     f1 = st.file_uploader("📄 Internal Assessment", type=["xlsx", "xls"], key="intf")
     f2 = st.file_uploader("📄 External Assessment", type=["xlsx", "xls"], key="extf")
 
     if f1 and f2:
         m1, df1 = read_internal_external(f1)
-        m2, m2_df = read_internal_external(f2)  # note: fixed variable
-        # Actually use m2, df2 correctly:
         m2, df2 = read_internal_external(f2)
         if m1 is None or m2 is None:
             st.error("❌ One of the files missing 'Total' row/max."); st.stop()
