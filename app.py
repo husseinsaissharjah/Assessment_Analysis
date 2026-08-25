@@ -34,12 +34,28 @@ def read_objectives_file(f):
     if not mask.any():
         return None, None
     max_row = df[mask].iloc[0]
-    obj_cols = [c for c in df.columns if c != 'Student Name']
-    total_max = sum(float(max_row[c]) for c in obj_cols if str(max_row[c]).strip() != '')
+    raw_obj_cols = [c for c in df.columns if c != 'Student Name']
+    valid_cols = []
+    total_max = 0.0
+    for c in raw_obj_cols:
+        hdr = str(c).strip()
+        mx_raw = max_row[c]
+        mx_str = str(mx_raw).strip()
+        if hdr != '' and hdr.lower() != 'nan' and not hdr.startswith('Unnamed') and mx_str != '' and mx_str.lower() != 'nan':
+            try:
+                mx = float(mx_raw)
+            except:
+                mx = 0.0
+            if mx > 0:
+                valid_cols.append(c)
+                total_max += mx
+    obj_cols = valid_cols
     df = df[~mask].copy().rename(columns={df.columns[0]: 'Student Name'})
+    if obj_cols:
+        df = df[['Student Name'] + obj_cols].copy()
     for c in obj_cols:
         df[c] = pd.to_numeric(df[c], errors='coerce').fillna(0)
-    df['Obtained'] = df[obj_cols].sum(axis=1)
+    df['Obtained'] = df[obj_cols].sum(axis=1) if obj_cols else 0
     df['Pct'] = (df['Obtained'] / total_max * 100).round(1) if total_max else 0.0
     return meta, df
 
@@ -49,6 +65,7 @@ def read_total_file(f):
     for c in raw.iloc[0, :]:
         val = str(c).strip()
         if ':' in val:
+            k, v = val... no, original:
             k, v = val.split(':', 1)
             meta[k.strip()] = v.strip()
     headers = [str(x).strip() for x in raw.iloc[1, :].tolist()]
@@ -77,7 +94,6 @@ def read_total_file(f):
 
 tab1, tab2, tab3 = st.tabs(["📊 Single Assessment", "🔄 Compare Objectives", "🆚 Internal vs External"])
 
-# ================= TAB 1 (OBJECTIVES) =================
 with tab1:
     st.header("Step 1: Upload Student Marks Excel")
     st.info("Row1: Info | Row2: Headers | Row3: 'Points for Objectives' + max marks | Row4+: Marks. Leave empty or 'A' for absent.")
@@ -100,13 +116,27 @@ with tab1:
         st.markdown(f"### 📝 Name: **{meta_info.get('Assessment name','N/A')}** | 📚 Subject: **{meta_info.get('Subject','N/A')}**")
 
         raw = pd.read_excel(up_file, header=1)
-        obj_names = [c for c in raw.columns if c != 'Student Name']
+        all_obj_names = [c for c in raw.columns if c != 'Student Name']
         mask = raw.iloc[:,0].astype(str).str.contains("Points for Objectives", case=False, na=False)
         if not mask.any():
             st.error("❌ Need 'Points for Objectives' row."); st.stop()
         max_row = raw[mask].iloc[0]
-        obj_max = [float(max_row[c]) if str(max_row.get(c,''))!='' else 0.0 for c in obj_names]
+        obj_names = []
+        obj_max = []
+        for c in all_obj_names:
+            hdr = str(c).strip()
+            mx_raw = max_row[c]
+            mx_str = str(mx_raw).strip()
+            if hdr != '' and hdr.lower() != 'nan' and not hdr.startswith('Unnamed') and mx_str != '' and mx_str.lower() != 'nan':
+                try:
+                    mx = float(mx_raw)
+                except:
+                    mx = 0.0
+                if mx > 0:
+                    obj_names.append(c)
+                    obj_max.append(mx)
         student_df = raw[~mask].copy().dropna(subset=['Student Name'])
+        student_df = student_df[['Student Name'] + obj_names].copy()
         def is_absent(row):
             has_A = False; all_empty = True
             for c in obj_names:
@@ -114,7 +144,7 @@ with tab1:
                 if isinstance(v,str) and 'a' in v.lower(): has_A = True
                 elif not (pd.isna(v) or (isinstance(v,str) and v.strip()=='')): all_empty = False
             return has_A or all_empty
-        student_df['Absent'] = student_df.apply(is_absent, axis=1) if False else student_df.apply(is_absent, axis=1)
+        student_df['Absent'] = student_df.apply(is_absent, axis=1)
         for c in obj_names:
             student_df[c] = pd.to_numeric(student_df[c], errors='coerce').fillna(0)
         total_max = sum(obj_max)
@@ -165,7 +195,6 @@ with tab1:
                 eb = io.BytesIO(); rdf.to_excel(eb, index=False)
                 st.download_button("📊 Download Excel", eb.getvalue(), "Report.xlsx")
 
-# ================= TAB 2 (OBJECTIVES) =================
 with tab2:
     st.header("Compare Multiple Assessments (Objectives)")
     st.info("Choose number of assessments. Upload files (same format as Tab 1). Each score → % before comparing.")
@@ -220,7 +249,6 @@ with tab2:
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Comparison.xlsx")
 
-# ================= TAB 3 (TOTAL) =================
 with tab3:
     st.header("Comparison between Internal and External Assessments (Total)")
     st.info("Upload two files. Excel: Row1 Info | Row2 Headers (Student Name, Total) | Row3: 'Total' + max mark (e.g., 40) | Row4+: marks.")
