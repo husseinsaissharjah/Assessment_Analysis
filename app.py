@@ -1,10 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.io as pio
 import io
 import os
-from fpdf import FPDF
 
 st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
 
@@ -58,8 +56,9 @@ with tab1:
                 v = row[c]
                 if isinstance(v, str) and 'a' in v.lower():
                     has_A = True
-                if not (pd.isna(v) or (isinstance(v, str) and v.strip()=='')):
-                    all_empty = False
+                else:
+                    if not (pd.isna(v) or (isinstance(v, str) and v.strip()=='')):
+                        all_empty = False
             return has_A or all_empty
         
         student_df['Absent'] = student_df.apply(is_absent, axis=1)
@@ -94,7 +93,15 @@ with tab1:
                     lvl = 'Fail' if tp<60 else 'Acceptable' if tp<70 else 'Good' if tp<80 else 'Very Good' if tp<90 else 'Outstanding'
                     res.append({'Student Name':row['Student Name'],'Total':tot,'Total %':round(tp,1),'Level':lvl})
                 rdf = pd.DataFrame(res)
-                st.header("Step 2: Report")
+                
+                st.header("Step 2: Analysis Report")
+                st.markdown(
+                    '<button onclick="window.print()" style="background:#1f77b4;color:white;padding:8px 16px;'
+                    'border:none;border-radius:4px;cursor:pointer;font-size:14px;">'
+                    '🖨️ Print / Save as PDF</button>',
+                    unsafe_allow_html=True
+                )
+                
                 c1,c2,c3,c4,c5,c6 = st.columns(6)
                 cnt = rdf['Level'].value_counts().to_dict()
                 c1.metric("Absent",cnt.get('Absent',0));c2.metric("Fail",cnt.get('Fail',0));c3.metric("Acceptable",cnt.get('Acceptable',0))
@@ -115,28 +122,11 @@ with tab1:
                     fp=px.pie(cdf,names='Level',values='Count',color='Level',color_discrete_map=COLORS,hole=0.3); fp.update_traces(textinfo='percent+label')
                     st.plotly_chart(fp,use_container_width=True)
                 st.dataframe(rdf, use_container_width=True)
-                e1,e2=st.columns(2)
-                eb=io.BytesIO(); rdf.to_excel(eb,index=False); e1.download_button("📊 Excel",eb.getvalue(),"Report.xlsx")
-                try:
-                    pdf=FPDF(); pdf.add_page(); pdf.set_font("Helvetica","B",16); pdf.cell(0,10,"Assessment Report",ln=True)
-                    pdf.set_font("Helvetica","",12)
-                    pdf.cell(0,10,f"Teacher: {meta_info.get('Teacher Name','')}",ln=True)
-                    pdf.cell(0,10,f"Class: {meta_info.get('Class','')}",ln=True)
-                    pdf.cell(0,10,f"Date: {meta_info.get('Date','')}",ln=True)
-                    pdf.cell(0,10,f"Assessment: {meta_info.get('Assessment name','')}",ln=True)
-                    pdf.cell(0,10,f"Overall: {ov}",ln=True); pdf.ln(5)
-                    try:
-                        ib = pio.to_image(fb, format="png", width=400, height=300)
-                        ip = pio.to_image(fp, format="png", width=400, height=300)
-                        y = pdf.get_y()
-                        pdf.image(io.BytesIO(ib), x=10, y=y, w=90)
-                        pdf.image(io.BytesIO(ip), x=110, y=y, w=90)
-                    except Exception: pass
-                    buf=io.BytesIO(); pdf.output(buf); buf.seek(0)
-                    e2.download_button("📄 PDF",buf.read(),"Report.pdf")
-                except Exception as ex: e2.error(f"PDF: {ex}")
+                
+                eb=io.BytesIO(); rdf.to_excel(eb,index=False)
+                st.download_button("📊 Download Excel",eb.getvalue(),"Report.xlsx")
 
-# ================= TAB 2 (FIXED SYNTAX) =================
+# ================= TAB 2 (FIXED PIE CHART) =================
 with tab2:
     st.header("Compare Multiple Assessments")
     st.info("Choose number of assessments. Upload files (same format as Tab 1). Each student's score is converted to % (out of 100) before comparing first vs last.")
