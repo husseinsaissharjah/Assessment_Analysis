@@ -6,9 +6,12 @@ import os
 
 st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
 
+# ---------- Centered Bigger Logo ----------
 if os.path.exists("logo.png"):
     try:
-        st.image("logo.png", width=120)
+        _, center_col, _ = st.columns([1, 2, 1])
+        with center_col:
+            st.image("logo.png", width=200)
     except Exception:
         pass
 
@@ -45,16 +48,13 @@ def read_meta_and_pct(f):
 # ---------- Helper for Tab 3 (Total column only) ----------
 def read_internal_external(f):
     raw = pd.read_excel(f, header=None)
-    # Meta from row 0
     meta_info = {}
     for c in raw.iloc[0, :]:
         val = str(c).strip()
         if ':' in val:
             k, v = val.split(':', 1)
             meta_info[k.strip()] = v.strip()
-    # Headers from row 1
     headers = [str(x).strip() for x in raw.iloc[1, :].tolist()]
-    # Find row where first column says "Total"
     total_idx = None
     for i in range(2, len(raw)):
         if 'total' in str(raw.iloc[i, 0]).lower():
@@ -66,7 +66,6 @@ def read_internal_external(f):
         max_total = float(raw.iloc[total_idx, 1])
     except:
         max_total = 100.0
-    # Data rows: from row 2 onward, exclude the Total row
     data = raw.iloc[2:, :].copy()
     data.columns = headers
     data = data[data.iloc[:, 0].astype(str).str.lower().str.contains('total') == False]
@@ -113,6 +112,7 @@ with tab1:
         m2.markdown(f"**🏫 Class:** {meta_info.get('Class', 'N/A')}")
         m3.markdown(f"**📅 Date:** {meta_info.get('Date', 'N/A')}")
         m4.markdown(f"**📝 Assessment:** {meta_info.get('Assessment name', 'N/A')}")
+        st.markdown(f"### 📝 Assessment Name: **{meta_info.get('Assessment name', 'N/A')}**")
 
         raw = pd.read_excel(up_file, header=1)
         obj_names = [c for c in raw.columns if c != 'Student Name']
@@ -218,7 +218,7 @@ with tab2:
         st.subheader("📋 Assessment Information")
         for i, m in enumerate(metas):
             st.markdown(f"**File {i+1} ({m.get('Assessment name', 'N/A')}):** 👩‍🏫 {m.get('Teacher Name', 'N/A')} | 🏫 {m.get('Class', 'N/A')} | 📅 {m.get('Date', 'N/A')}")
-        st.success(f"📊 Comparison between {' / '.join(names)}")
+        st.markdown(f"### 📊 Comparing Assessments: **{' / '.join(names)}**")
 
         merged[pct_cols] = merged[pct_cols].fillna(0)
         merged['Difference'] = (merged[pct_cols[-1]] - merged[pct_cols[0]]).round(1)
@@ -253,7 +253,7 @@ with tab2:
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Comparison.xlsx")
 
-# ================= TAB 3 (FIXED Total detection) =================
+# ================= TAB 3 =================
 with tab3:
     st.header("Comparison between Internal and External Assessments")
     st.info("Upload two files. Excel: Row1 Info | Row2 Headers (Student Name, Total) | Row3: 'Total' + max mark (e.g., 40) | Row4+: marks.")
@@ -269,7 +269,7 @@ with tab3:
         st.subheader("📋 Assessment Information")
         st.markdown(f"**Internal:** 👩‍🏫 {m1.get('Teacher Name', 'N/A')} | 🏫 {m1.get('Class', 'N/A')} | 📅 {m1.get('Date', 'N/A')} | 📝 {m1.get('Assessment name', 'N/A')}")
         st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A')} | 🏫 {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')}")
-        st.success(f"📊 Comparison between {m1.get('Assessment name', 'Internal')} / {m2.get('Assessment name', 'External')}")
+        st.markdown(f"### 📊 Comparing: **{m1.get('Assessment name', 'Internal')} / {m2.get('Assessment name', 'External')}**")
 
         merged = pd.merge(
             df1[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct1'}),
@@ -290,11 +290,11 @@ with tab3:
 
         cd = pd.DataFrame({'Status': ['Growth', 'Decay', 'Same'], 'Count': [gc, dc, sc]})
         cd['Status'] = pd.Categorical(cd['Status'], categories=['Decay', 'Same', 'Growth'], ordered=True)
-        v1, v2 = st.columns(2)
+        v1, _ = st.columns([1,1])
         with v1:
             st.markdown("**Bar Chart**")
             st.plotly_chart(px.bar(cd, x='Status', y='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}), use_container_width=True)
-        with v2:
+        with _:
             st.markdown("**Pie Chart**")
             pf = px.pie(cd, names='Status', values='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}, hole=0.3)
             pf.update_traces(textinfo='percent+label'); st.plotly_chart(pf, use_container_width=True)
