@@ -41,7 +41,6 @@ def read_objectives_file(f):
         hdr = str(c).strip()
         mx_raw = max_row[c]
         mx_str = str(mx_raw).strip()
-        # Only keep if header is written AND max mark is written/valid
         if hdr != '' and hdr.lower() != 'nan' and not hdr.startswith('Unnamed') and mx_str != '' and mx_str.lower() != 'nan':
             try:
                 mx = float(mx_raw)
@@ -53,7 +52,7 @@ def read_objectives_file(f):
     obj_cols = valid_cols
     df = df[~mask].copy().rename(columns={df.columns[0]: 'Student Name'})
     if obj_cols:
-        df = df[['Student Name'] + obj_cols].copy()
+        df = df[['Student Name'] + obj_cols]
     for c in obj_cols:
         df[c] = pd.to_numeric(df[c], errors='coerce').fillna(0)
     df['Obtained'] = df[obj_cols].sum(axis=1) if obj_cols else 0
@@ -94,7 +93,6 @@ def read_total_file(f):
 
 tab1, tab2, tab3 = st.tabs(["📊 Single Assessment", "🔄 Compare Objectives", "🆚 Internal vs External"])
 
-# ================= TAB 1 (OBJECTIVES) =================
 with tab1:
     st.header("Step 1: Upload Student Marks Excel")
     st.info("Row1: Info | Row2: Headers | Row3: 'Points for Objectives' + max marks | Row4+: Marks. Leave empty or 'A' for absent.")
@@ -196,7 +194,6 @@ with tab1:
                 eb = io.BytesIO(); rdf.to_excel(eb, index=False)
                 st.download_button("📊 Download Excel", eb.getvalue(), "Report.xlsx")
 
-# ================= TAB 2 (OBJECTIVES) =================
 with tab2:
     st.header("Compare Multiple Assessments (Objectives)")
     st.info("Choose number of assessments. Upload files (same format as Tab 1). Each score → % before comparing.")
@@ -239,7 +236,6 @@ with tab2:
         with v1:
             st.markdown("**Bar Chart**")
             st.plotly_chart(px.bar(cd, x='Status', y='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}), use_container_width=True)
-        with v2...
         with v2:
             st.markdown("**Pie Chart**")
             pf = px.pie(cd, names='Status', values='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}, hole=0.3)
@@ -252,7 +248,6 @@ with tab2:
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Comparison.xlsx")
 
-# ================= TAB 3 (TOTAL) =================
 with tab3:
     st.header("Comparison between Internal and External Assessments (Total)")
     st.info("Upload two files. Excel: Row1 Info | Row2 Headers (Student Name, Total) | Row3: 'Total' + max mark (e.g., 40) | Row4+: marks.")
@@ -283,7 +278,6 @@ with tab3:
         mc1.metric("🟩 Growth", gc); mc2.metric("🟥 Decay", dc); mc3.metric("🟨 Same", sc)
         cd = pd.DataFrame({'Status': ['Growth', 'Decay', 'Same'], 'Count': [gc, dc, sc]})
         cd['Status'] = pd.Categorical(cd['Status'], categories=['Decay', 'Same', 'Growth'], ordered=True)
-        and cd...
         v1, v2 = st.columns(2)
         with v1:
             st.markdown("**Bar Chart**")
