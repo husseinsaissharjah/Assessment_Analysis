@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -26,25 +25,25 @@ if os.path.exists("logo.png"):
 st.title("📊 SAIS Analyzer")
 
 # ============================================================
-# COLORS AND LEVEL ORDER
+# COLORS
 # ============================================================
 
 COLORS = {
-    'Absent': '#808080',
-    'Fail': '#d62728',
-    'Acceptable': '#ff7f0e',
-    'Good': '#2ca02c',
-    'Very Good': '#1f77b4',
-    'Outstanding': '#9467bd'
+    "Absent": "#808080",
+    "Fail": "#d62728",
+    "Acceptable": "#ff7f0e",
+    "Good": "#2ca02c",
+    "Very Good": "#1f77b4",
+    "Outstanding": "#9467bd"
 }
 
 ORDER = [
-    'Absent',
-    'Fail',
-    'Acceptable',
-    'Good',
-    'Very Good',
-    'Outstanding'
+    "Absent",
+    "Fail",
+    "Acceptable",
+    "Good",
+    "Very Good",
+    "Outstanding"
 ]
 
 # ============================================================
@@ -58,7 +57,7 @@ tab1, tab2 = st.tabs([
 
 
 # ============================================================
-# TAB 1 - SINGLE ASSESSMENT
+# TAB 1
 # ============================================================
 
 with tab1:
@@ -66,7 +65,7 @@ with tab1:
     st.header("Step 1: Upload Student Marks Excel")
 
     st.info(
-        "Excel format must follow this structure:\n\n"
+        "Excel format:\n\n"
         "• Row 1: Teacher Name | Class | Date | Assessment name\n"
         "• Row 2: Student Name | Objective 1 | Objective 2 | Objective 3 | ...\n"
         "• Row 3: Points for Objectives | Maximum | Maximum | Maximum | ...\n"
@@ -82,8 +81,10 @@ with tab1:
     if up_file:
 
         # ====================================================
-        # READ ROW 1 - ASSESSMENT INFORMATION
+        # READ ROW 1 - METADATA
         # ====================================================
+
+        up_file.seek(0)
 
         meta_raw = pd.read_excel(
             up_file,
@@ -103,13 +104,11 @@ with tab1:
             value = str(value).strip()
 
             if ":" in value:
-
                 key, val = value.split(":", 1)
-
                 meta_info[key.strip()] = val.strip()
 
         # ====================================================
-        # DISPLAY ASSESSMENT INFORMATION
+        # DISPLAY INFORMATION
         # ====================================================
 
         st.subheader("📋 Assessment Information")
@@ -147,10 +146,15 @@ with tab1:
             header=1
         )
 
-        # Remove completely empty columns
-        raw = raw.dropna(axis=1, how="all")
+        raw = raw.dropna(
+            axis=1,
+            how="all"
+        )
 
-        # Make sure Student Name exists
+        # ====================================================
+        # CHECK STUDENT NAME
+        # ====================================================
+
         if "Student Name" not in raw.columns:
 
             st.error(
@@ -161,7 +165,7 @@ with tab1:
             st.stop()
 
         # ====================================================
-        # GET OBJECTIVE NAMES
+        # OBJECTIVES
         # ====================================================
 
         obj_names = [
@@ -173,14 +177,13 @@ with tab1:
         if len(obj_names) == 0:
 
             st.error(
-                "❌ No objectives were found. "
-                "Please add Objective 1, Objective 2, etc."
+                "❌ No objectives were found."
             )
 
             st.stop()
 
         # ====================================================
-        # FIND ROW 3 - POINTS FOR OBJECTIVES
+        # FIND POINTS FOR OBJECTIVES ROW
         # ====================================================
 
         mask = (
@@ -198,16 +201,16 @@ with tab1:
 
             st.error(
                 "❌ Row 3 must contain "
-                "'Points for Objectives' in the first column."
+                "'Points for Objectives' "
+                "in the first column."
             )
 
             st.stop()
 
-        # Take the first matching row
         max_row = raw[mask].iloc[0]
 
         # ====================================================
-        # READ MAXIMUM MARK FOR EACH OBJECTIVE
+        # READ MAXIMUM MARKS
         # ====================================================
 
         obj_max = []
@@ -222,6 +225,7 @@ with tab1:
                 mx = float(value)
 
                 if mx <= 0:
+
                     max_errors.append(
                         f"• {col}: maximum mark must be greater than 0."
                     )
@@ -236,7 +240,6 @@ with tab1:
 
             obj_max.append(mx)
 
-        # Stop if maximum marks are invalid
         if max_errors:
 
             st.error(
@@ -247,30 +250,38 @@ with tab1:
             st.stop()
 
         # ====================================================
-        # CREATE STUDENT DATA
+        # STUDENT DATA
         # ====================================================
 
         student_df = raw[~mask].copy()
 
-        # Remove blank student rows
         student_df = student_df.dropna(
             subset=["Student Name"]
         )
 
-        # Clean student names
         student_df["Student Name"] = (
             student_df["Student Name"]
             .astype(str)
             .str.strip()
         )
 
-        # Remove rows where Student Name is empty
         student_df = student_df[
             student_df["Student Name"] != ""
         ]
 
         # ====================================================
-        # VALIDATE STUDENT MARKS
+        # CONVERT MARKS TO NUMBERS
+        # ====================================================
+
+        for col in obj_names:
+
+            student_df[col] = pd.to_numeric(
+                student_df[col],
+                errors="coerce"
+            )
+
+        # ====================================================
+        # VALIDATION
         # ====================================================
 
         errors = []
@@ -281,58 +292,43 @@ with tab1:
 
             for j, col in enumerate(obj_names):
 
-                original_value = row[col]
-                mx = obj_max[j]
+                value = row[col]
+                maximum = obj_max[j]
 
-                # Empty mark = 0
-                if pd.isna(original_value) or str(
-                    original_value
-                ).strip() == "":
+                # Empty cells are treated as 0
+                if pd.isna(value):
 
                     mark = 0.0
 
                 else:
 
-                    try:
-                        mark = float(original_value)
+                    mark = float(value)
 
-                    except Exception:
-
-                        errors.append(
-                            f"• {student_name}: "
-                            f"'{col}' is not a valid number."
-                        )
-
-                        continue
-
-                # Check maximum
-                if mark > mx:
-
-                    errors.append(
-                        f"• {student_name}: "
-                        f"'{col}' mark = {mark:g} "
-                        f"exceeds maximum {mx:g}."
-                    )
-
-                # Check negative
+                # Check negative marks
                 if mark < 0:
 
                     errors.append(
                         f"• {student_name}: "
-                        f"'{col}' mark = {mark:g} "
+                        f"{col} = {mark:g} "
                         f"is negative."
                     )
 
-        # ====================================================
-        # CONVERT MARK COLUMNS TO NUMERIC
-        # ====================================================
+                # Check marks above maximum
+                if mark > maximum:
 
+                    errors.append(
+                        f"• {student_name}: "
+                        f"{col} = {mark:g} "
+                        f"exceeds maximum {maximum:g}."
+                    )
+
+        # Replace empty marks with zero
         for col in obj_names:
 
-            student_df[col] = pd.to_numeric(
-                student_df[col],
-                errors="coerce"
-            ).fillna(0)
+            student_df[col] = (
+                student_df[col]
+                .fillna(0)
+            )
 
         # ====================================================
         # TOTAL MAXIMUM
@@ -341,11 +337,12 @@ with tab1:
         total_max = sum(obj_max)
 
         st.info(
-            f"📋 Total Maximum Mark = **{total_max:g}**"
+            f"📋 Total Maximum Mark = "
+            f"**{total_max:g}**"
         )
 
         # ====================================================
-        # DATA PREVIEW
+        # PREVIEW
         # ====================================================
 
         st.subheader("📊 Student Data Preview")
@@ -360,7 +357,7 @@ with tab1:
         )
 
         # ====================================================
-        # VALIDATION RESULT
+        # VALIDATION MESSAGE
         # ====================================================
 
         analyze_disabled = False
@@ -369,7 +366,7 @@ with tab1:
 
             st.error(
                 "🚫 Data entry problems found. "
-                "Please fix the Excel file and re-upload:\n\n"
+                "Please fix the Excel file and upload it again.\n\n"
                 + "\n".join(errors)
             )
 
@@ -383,7 +380,7 @@ with tab1:
             )
 
         # ====================================================
-        # ANALYZE BUTTON
+        # ANALYZE
         # ====================================================
 
         if st.button(
@@ -397,37 +394,40 @@ with tab1:
 
                 student_name = row["Student Name"]
 
-                obtained_sum = 0.0
+                # --------------------------------------------
+                # TOTAL OBTAINED
+                # --------------------------------------------
 
-                # --------------------------------------------
-                # Calculate total obtained
-                # --------------------------------------------
+                obtained_sum = 0.0
 
                 for col in obj_names:
 
-                    mark = float(row[col])
-
-                    obtained_sum += mark
+                    obtained_sum += float(
+                        row[col]
+                    )
 
                 # --------------------------------------------
-                # IMPORTANT:
-                # Total % = Total Obtained / Total Maximum
+                # TOTAL PERCENTAGE
                 # --------------------------------------------
 
                 if total_max > 0:
 
                     total_pct = (
-                        obtained_sum / total_max
+                        obtained_sum /
+                        total_max
                     ) * 100
 
                 else:
 
                     total_pct = 0
 
-                total_pct = round(total_pct, 1)
+                total_pct = round(
+                    total_pct,
+                    1
+                )
 
                 # --------------------------------------------
-                # Determine Level
+                # LEVEL
                 # --------------------------------------------
 
                 if total_pct < 60:
@@ -452,22 +452,25 @@ with tab1:
 
                 results.append({
                     "Student Name": student_name,
-                    "Total": round(obtained_sum, 1),
+                    "Total": round(
+                        obtained_sum,
+                        1
+                    ),
                     "Total %": total_pct,
                     "Level": level
                 })
 
             # =================================================
-            # RESULTS DATAFRAME
+            # RESULTS
             # =================================================
 
-            res_df = pd.DataFrame(results)
+            res_df = pd.DataFrame(
+                results
+            )
 
-            # =================================================
-            # STEP 2
-            # =================================================
-
-            st.header("Step 2: Analysis Report")
+            st.header(
+                "Step 2: Analysis Report"
+            )
 
             # =================================================
             # LEVEL COUNTS
@@ -515,29 +518,36 @@ with tab1:
             # OVERALL QUIZ LEVEL
             # =================================================
 
-            st.subheader("📢 Overall Quiz Level")
+            st.subheader(
+                "📢 Overall Quiz Level"
+            )
 
-            total_students = len(res_df)
+            total_students = len(
+                res_df
+            )
 
             if total_students > 0:
 
                 ge60 = (
-                    (res_df["Total %"] >= 60)
-                    .sum()
+                    (
+                        res_df["Total %"] >= 60
+                    ).sum()
                     / total_students
                     * 100
                 )
 
                 gt60 = (
-                    (res_df["Total %"] > 60)
-                    .sum()
+                    (
+                        res_df["Total %"] > 60
+                    ).sum()
                     / total_students
                     * 100
                 )
 
                 gt75 = (
-                    (res_df["Total %"] > 75)
-                    .sum()
+                    (
+                        res_df["Total %"] > 75
+                    ).sum()
                     / total_students
                     * 100
                 )
@@ -548,7 +558,6 @@ with tab1:
                 gt60 = 0
                 gt75 = 0
 
-            # Overall classification
             if gt75 >= 90:
 
                 overall = "Outstanding"
@@ -584,27 +593,33 @@ with tab1:
             # VISUALIZATIONS
             # =================================================
 
-            st.subheader("📊 Visualizations")
+            st.subheader(
+                "📊 Visualizations"
+            )
 
-            # Make sure all levels appear in correct order
             cdf = (
                 res_df["Level"]
                 .value_counts()
-                .reindex(ORDER, fill_value=0)
+                .reindex(
+                    ORDER,
+                    fill_value=0
+                )
                 .reset_index()
             )
 
-            cdf.columns = ["Level", "Count"]
+            cdf.columns = [
+                "Level",
+                "Count"
+            ]
 
             v1, v2 = st.columns(2)
 
-            # -----------------------------------------------
-            # BAR CHART
-            # -----------------------------------------------
-
+            # BAR
             with v1:
 
-                st.markdown("**Bar Chart**")
+                st.markdown(
+                    "**Bar Chart**"
+                )
 
                 fb = px.bar(
                     cdf,
@@ -622,15 +637,13 @@ with tab1:
                     use_container_width=True
                 )
 
-            # -----------------------------------------------
-            # PIE CHART
-            # -----------------------------------------------
-
+            # PIE
             with v2:
 
-                st.markdown("**Pie Chart**")
+                st.markdown(
+                    "**Pie Chart**"
+                )
 
-                # Only show levels that have students
                 pie_data = cdf[
                     cdf["Count"] > 0
                 ]
@@ -654,7 +667,7 @@ with tab1:
                 )
 
             # =================================================
-            # DETAILED STUDENT TABLE
+            # DETAILED TABLE
             # =================================================
 
             st.subheader(
@@ -670,12 +683,14 @@ with tab1:
             # EXPORT
             # =================================================
 
-            st.subheader("📥 Export Report")
+            st.subheader(
+                "📥 Export Report"
+            )
 
             e1, e2 = st.columns(2)
 
             # =================================================
-            # EXCEL EXPORT
+            # EXCEL
             # =================================================
 
             excel_buffer = io.BytesIO()
@@ -704,7 +719,7 @@ with tab1:
             )
 
             # =================================================
-            # PDF EXPORT
+            # PDF
             # =================================================
 
             try:
@@ -734,30 +749,62 @@ with tab1:
 
                 teacher = (
                     meta_info
-                    .get("Teacher Name", "")
-                    .encode("ascii", "ignore")
-                    .decode("ascii")
+                    .get(
+                        "Teacher Name",
+                        ""
+                    )
+                    .encode(
+                        "ascii",
+                        "ignore"
+                    )
+                    .decode(
+                        "ascii"
+                    )
                 )
 
                 class_name = (
                     meta_info
-                    .get("Class", "")
-                    .encode("ascii", "ignore")
-                    .decode("ascii")
+                    .get(
+                        "Class",
+                        ""
+                    )
+                    .encode(
+                        "ascii",
+                        "ignore"
+                    )
+                    .decode(
+                        "ascii"
+                    )
                 )
 
                 date_value = (
                     meta_info
-                    .get("Date", "")
-                    .encode("ascii", "ignore")
-                    .decode("ascii")
+                    .get(
+                        "Date",
+                        ""
+                    )
+                    .encode(
+                        "ascii",
+                        "ignore"
+                    )
+                    .decode(
+                        "ascii"
+                    )
                 )
 
                 assessment = (
                     meta_info
-                    .get("Assessment name", "")
-                    .encode("ascii", "ignore")
-                    .decode("ascii")
+                    .get(
+                        "Assessment name",
+                        ""
+                    )
+                    .encode(
+                        "ascii",
+                        "ignore"
+                    )
+                    .decode(
+                        "ascii"
+                    )
                 )
 
                 pdf.cell(
@@ -811,10 +858,7 @@ with tab1:
 
                 pdf.ln(5)
 
-                # --------------------------------------------
-                # Add charts
-                # --------------------------------------------
-
+                # Charts
                 try:
 
                     ib = pio.to_image(
@@ -850,10 +894,7 @@ with tab1:
 
                 pdf.ln(120)
 
-                # --------------------------------------------
-                # Level summary table
-                # --------------------------------------------
-
+                # Summary table
                 pdf.set_font(
                     "Helvetica",
                     "B",
@@ -959,7 +1000,6 @@ with tab2:
     if f1 and f2:
 
         df1 = pd.read_excel(f1)
-
         df2 = pd.read_excel(f2)
 
         df1 = df1.rename(
@@ -1015,7 +1055,8 @@ with tab2:
         )
 
         mg["Difference"] = (
-            mg["Score2"] - mg["Score1"]
+            mg["Score2"] -
+            mg["Score1"]
         ).round(1)
 
         def stat(d):
@@ -1029,9 +1070,10 @@ with tab2:
             else:
                 return "Same"
 
-        mg["Status"] = mg[
-            "Difference"
-        ].apply(stat)
+        mg["Status"] = (
+            mg["Difference"]
+            .apply(stat)
+        )
 
         def color_cell(val):
 
@@ -1077,9 +1119,20 @@ with tab2:
             .to_dict()
         )
 
-        gc = cnt2.get("Growth", 0)
-        dc = cnt2.get("Decay", 0)
-        sc = cnt2.get("Same", 0)
+        gc = cnt2.get(
+            "Growth",
+            0
+        )
+
+        dc = cnt2.get(
+            "Decay",
+            0
+        )
+
+        sc = cnt2.get(
+            "Same",
+            0
+        )
 
         st.subheader(
             "📢 Comparison Summary"
@@ -1194,4 +1247,3 @@ with tab2:
             bufc.getvalue(),
             "Comparison.xlsx"
         )
-```
