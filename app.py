@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.io as pio
 import io
 import os
 from fpdf import FPDF
@@ -21,7 +20,7 @@ ORDER = ['Absent','Fail','Acceptable','Good','Very Good','Outstanding']
 
 tab1, tab2 = st.tabs(["📊 Single Assessment Analysis", "🔄 Comparison (Multiple Assessments)"])
 
-# ================= TAB 1 =================
+# ================= TAB 1 (Unchanged working logic) =================
 with tab1:
     st.header("Step 1: Upload Student Marks Excel")
     st.info("Row1: Info | Row2: Headers | Row3: 'Points for Objectives' + max marks | Row4+: Marks")
@@ -47,7 +46,7 @@ with tab1:
         if not mask.any():
             st.error("❌ Need 'Points for Objectives' row."); st.stop()
         max_row = raw[mask].iloc[0]
-        obj_max = [float(max_row[c]) if str(max_row[c]).strip()!='' else 0.0 for c in obj_names]
+        obj_max = [float(max_row[c]) if str(max_row.get(c,''))!='' else 0.0 for c in obj_names]
         student_df = raw[~mask].copy().dropna(subset=['Student Name'])
         for c in obj_names: student_df[c] = pd.to_numeric(student_df[c], errors='coerce').fillna(0)
         total_max = sum(obj_max)
@@ -68,7 +67,7 @@ with tab1:
                     for j,c in enumerate(obj_names):
                         mk = float(row[c]); tot += mk; ps.append((mk/obj_max[j])*100 if obj_max[j] else 0)
                     tp = sum(ps)/len(ps)
-                    lvl = 'Fail' if False else ('Fail' if tp<60 else 'Acceptable' if tp<70 else 'Good' if tp<80 else 'Very Good' if tp<90 else 'Outstanding')
+                    lvl = 'Fail' if tp<60 else 'Acceptable' if tp<70 else 'Good' if tp<80 else 'Very Good' if tp<90 else 'Outstanding'
                     res.append({'Student Name':row['Student Name'],'Total':tot,'Total %':round(tp,1),'Level':lvl})
                 rdf = pd.DataFrame(res)
                 st.header("Step 2: Report")
@@ -85,8 +84,10 @@ with tab1:
                 cdf = rdf['Level'].value_counts().reset_index(); cdf.columns=['Level','Count']
                 cdf['Level']=pd.Categorical(cdf['Level'],categories=ORDER,ordered=True); cdf=cdf.sort_values('Level')
                 v1,v2=st.columns(2)
-                with v1: fb=px.bar(cdf,x='Level',y='Count',color='Level',category_orders={"Level":ORDER},color_discrete_map=COLORS); st.plotly_chart(fb,use_container_width=True)
-                with v2: fp=px.pie(cdf,names='Level',values='Count',color='Level',color_discrete_map=COLORS,hole=0.3); fp.update_traces(textinfo='percent+label'); st.plotly_chart(fp,use_container_width=True)
+                with v1: st.plotly_chart(px.bar(cdf,x='Level',y='Count',color='Level',category_orders={"Level":ORDER},color_discrete_map=COLORS),use_container_width=True)
+                with v2: 
+                    fp=px.pie(cdf,names='Level',values='Count',color='Level',color_discrete_map=COLORS,hole=0.3); fp.update_traces(textinfo='percent+label')
+                    st.plotly_chart(fp,use_container_width=True)
                 st.dataframe(rdf, use_container_width=True)
                 e1,e2=st.columns(2)
                 eb=io.BytesIO(); rdf.to_excel(eb,index=False); e1.download_button("📊 Excel",eb.getvalue(),"Report.xlsx")
@@ -97,10 +98,10 @@ with tab1:
                     e2.download_button("📄 PDF",buf.read(),"Report.pdf")
                 except Exception as ex: e2.error(f"PDF: {ex}")
 
-# ================= TAB 2 (NEW) =================
+# ================= TAB 2 (PERCENTAGE-BASED COMPARISON) =================
 with tab2:
     st.header("Compare Multiple Assessments")
-    st.info("Select number of assessments. Upload each file (same students). App sums marks and compares first vs last.")
+    st.info("Choose number of assessments. Upload files (same format as Tab 1). Each student's score is converted to % (out of 100) before comparing first vs last.")
     n_assess = st.number_input("🔢 Number of assessments", min_value=2, max_value=10, value=2, step=1, key="nass")
     files = []
     for i in range(int(n_assess)):
@@ -108,21 +109,28 @@ with tab2:
     
     if all(files):
         merged = None
-        score_cols = []
+        pct_cols = []
         for i, f in enumerate(files):
             df = pd.read_excel(f, header=1)
             mask = df.iloc[:,0].astype(str).str.contains("Points for Objectives", case=False, na=False)
+            if not mask.any():
+                st.error(f"❌ File {i+1} missing 'Points for Objectives' row."); st.stop()
+            max_row = df[mask].iloc[0]
+            obj_cols = [c for c in df.columns if c != 'Student Name']
+            total_max = sum(float(max_row[c]) for c in obj_cols if str(max_row[c]).strip()!='')
             df = df[~mask].copy()
             df = df.rename(columns={df.columns[0]:'Student Name'})
-            df[df.columns[1:]] = df[df.columns[1:]].apply(pd.to_numeric, errors='coerce').fillna(0)
-            col = f'Score{i+1}'
-            df[col] = df.drop(columns=['Student Name']).sum(axis=1)
-            score_cols.append(col)
-            keep = df[['Student Name', col]]
+            for c in obj_cols:
+                df[c] = pd.to_numeric(df[c], errors='coerce').fillna(0)
+            df['Obtained'] = df[obj_cols].sum(axis=1)
+            df['Pct'] = (df['Obtained'] / total_max * 100).round(1) if total_max else 0.0
+            col = f'Pct{i+1}'
+            keep = df[['Student Name', 'Pct']].rename(columns={'Pct': col})
             merged = keep if merged is None else pd.merge(merged, keep, on='Student Name', how='outer')
         
-        merged[score_cols] = merged[score_cols].fillna(0)
-        merged['Difference'] = (merged[score_cols[-1]] - merged[score_cols[0]]).round(1)
+        pct_cols = [f'Pct{i+1}' for i in range(len(files))]
+        merged[pct_cols] = merged[pct_cols].fillna(0)
+        merged['Difference'] = (merged[pct_cols[-1]] - merged[pct_cols[0]]).round(1)
         merged['Status'] = merged['Difference'].apply(lambda d: 'Growth' if d>0.5 else 'Decay' if d<-0.5 else 'Same')
         
         def color_cell(v):
@@ -130,7 +138,7 @@ with tab2:
             if v=='Decay': return 'background-color: red; color: white'
             if v=='Same': return 'background-color: yellow'
             return ''
-        st.subheader("📊 Comparison Table")
+        st.subheader("📊 Comparison Table (Percentage Based)")
         st.dataframe(merged.style.map(color_cell, subset=['Status']), use_container_width=True)
         
         cnt = merged['Status'].value_counts().to_dict()
@@ -150,11 +158,10 @@ with tab2:
             pf=px.pie(cd,names='Status',values='Count',color='Status',color_discrete_map={'Growth':'green','Decay':'red','Same':'yellow'},hole=0.3)
             pf.update_traces(textinfo='percent+label'); st.plotly_chart(pf, use_container_width=True)
         
-        # Trend line
-        avg = merged[score_cols].mean().reset_index()
+        avg = merged[pct_cols].mean().reset_index()
         avg.columns = ['Assessment','Average']
-        avg['Assessment'] = avg['Assessment'].str.replace('Score','Assess ')
-        st.subheader("📈 Average Score Trend")
+        avg['Assessment'] = avg['Assessment'].str.replace('Pct','Assess ')
+        st.subheader("📈 Average Score Trend (%)")
         st.plotly_chart(px.line(avg, x='Assessment', y='Average', markers=True), use_container_width=True)
         
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
