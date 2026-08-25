@@ -6,12 +6,9 @@ import os
 
 st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
 
-# ---------- Centered Bigger Logo ----------
 if os.path.exists("logo.png"):
     try:
-        _, center_col, _ = st.columns([1, 2, 1])
-        with center_col:
-            st.image("logo.png", width=200)
+        st.image("logo.png", width=120)
     except Exception:
         pass
 
@@ -78,7 +75,7 @@ def read_internal_external(f):
     data['Pct'] = (data[total_col] / max_total * 100).round(1) if max_total else 0.0
     return meta_info, data
 
-# ---------- Cell color ----------
+# ---------- Helper for cell color ----------
 def color_cell(v):
     if v == 'Growth': return 'background-color: green; color: white'
     if v == 'Decay': return 'background-color: red; color: white'
@@ -95,7 +92,7 @@ tab1, tab2, tab3 = st.tabs([
 # ================= TAB 1 =================
 with tab1:
     st.header("Step 1: Upload Student Marks Excel")
-    st.info("Row1: Info | Row2: Headers | Row3: 'Points for Objectives' + max marks | Row4+: Marks. Leave empty or put 'A' for absent.")
+    st.info("Row1: Info (Teacher/Class/Date/Assessment/Subject) | Row2: Headers | Row3: 'Points for Objectives' + max marks | Row4+: Marks.")
     up_file = st.file_uploader("Upload Excel", type=["xlsx", "xls"], key="single")
     if up_file:
         meta_raw = pd.read_excel(up_file, nrows=1, header=None)
@@ -112,7 +109,7 @@ with tab1:
         m2.markdown(f"**🏫 Class:** {meta_info.get('Class', 'N/A')}")
         m3.markdown(f"**📅 Date:** {meta_info.get('Date', 'N/A')}")
         m4.markdown(f"**📝 Assessment:** {meta_info.get('Assessment name', 'N/A')}")
-        st.markdown(f"### 📝 Assessment Name: **{meta_info.get('Assessment name', 'N/A')}**")
+        st.markdown(f"### 📝 Assessment Name: **{meta_info.get('Assessment name', 'N/A')}**  |  📚 Subject: **{meta_info.get('Subject', 'N/A')}**")
 
         raw = pd.read_excel(up_file, header=1)
         obj_names = [c for c in raw.columns if c != 'Student Name']
@@ -217,8 +214,8 @@ with tab2:
 
         st.subheader("📋 Assessment Information")
         for i, m in enumerate(metas):
-            st.markdown(f"**File {i+1} ({m.get('Assessment name', 'N/A')}):** 👩‍🏫 {m.get('Teacher Name', 'N/A')} | 🏫 {m.get('Class', 'N/A')} | 📅 {m.get('Date', 'N/A')}")
-        st.markdown(f"### 📊 Comparing Assessments: **{' / '.join(names)}**")
+            st.markdown(f"**File {i+1} ({m.get('Assessment name', 'N/A')}):** 👩‍🏫 {m.get('Teacher Name', 'N/A')} | 🏫 {m.get('Class', 'N/A')} | 📅 {m.get('Date', 'N/A')} | 📚 {m.get('Subject', 'N/A')}")
+        st.markdown(f"### 📊 Comparing Assessments: **{' / '.join(names)}**  |  📚 Subject: **{metas[0].get('Subject', 'N/A')}**")
 
         merged[pct_cols] = merged[pct_cols].fillna(0)
         merged['Difference'] = (merged[pct_cols[-1]] - merged[pct_cols[0]]).round(1)
@@ -267,9 +264,9 @@ with tab3:
             st.error("❌ One of the files missing 'Total' row/max."); st.stop()
 
         st.subheader("📋 Assessment Information")
-        st.markdown(f"**Internal:** 👩‍🏫 {m1.get('Teacher Name', 'N/A')} | 🏫 {m1.get('Class', 'N/A')} | 📅 {m1.get('Date', 'N/A')} | 📝 {m1.get('Assessment name', 'N/A')}")
-        st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A')} | 🏫 {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')}")
-        st.markdown(f"### 📊 Comparing: **{m1.get('Assessment name', 'Internal')} / {m2.get('Assessment name', 'External')}**")
+        st.markdown(f"**Internal:** 👩‍🏫 {m1.get('Teacher Name', 'N/A')} | 🏫 {m1.get('Class', 'N/A')} | 📅 {m1.get('Date', 'N/A')} | 📝 {m1.get('Assessment name', 'N/A')} | 📚 {m1.get('Subject', 'N/A')}")
+        st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A') if 'Teacher Name' in m2 else 'N/A'} | 🏫 {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')} | 📚 {m2.get('Subject', 'N/A')}")
+        st.markdown(f"### 📊 Comparing: **{m1.get('Assessment name', 'Internal')} / {m2.get('Assessment name', 'External')}**  |  📚 Subject: **{m1.get('Subject', 'N/A')}**")
 
         merged = pd.merge(
             df1[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct1'}),
@@ -290,11 +287,11 @@ with tab3:
 
         cd = pd.DataFrame({'Status': ['Growth', 'Decay', 'Same'], 'Count': [gc, dc, sc]})
         cd['Status'] = pd.Categorical(cd['Status'], categories=['Decay', 'Same', 'Growth'], ordered=True)
-        v1, _ = st.columns([1,1])
+        v1, v2 = st.columns(2)
         with v1:
             st.markdown("**Bar Chart**")
             st.plotly_chart(px.bar(cd, x='Status', y='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}), use_container_width=True)
-        with _:
+        with v2:
             st.markdown("**Pie Chart**")
             pf = px.pie(cd, names='Status', values='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}, hole=0.3)
             pf.update_traces(textinfo='percent+label'); st.plotly_chart(pf, use_container_width=True)
