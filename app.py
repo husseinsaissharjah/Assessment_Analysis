@@ -14,61 +14,6 @@ st.title("📊 SAIS Analyzer")
 COLORS = {'Absent':'#808080','Fail':'#d62728','Acceptable':'#ff7f0e','Good':'#2ca02c','Very Good':'#1f77b4','Outstanding':'#9467bd'}
 ORDER = ['Absent','Fail','Acceptable','Good','Very Good','Outstanding']
 
-def get_objectives_data(f):
-    meta_raw = pd.read_excel(f, nrows=1, header=None)
-    f.seek(0)
-    meta = {}
-    for c in meta_raw.columns:
-        val = str(meta_raw.iloc[0, c]).strip()
-        if ':' in val:
-            k, v = val.split(':', 1)
-            meta[k.strip()] = v.strip()
-    df = pd.read_excel(f, header=1)
-    mask = df.iloc[:, 0].astype(str).str.contains("Points for Objectives", case=False, na=False)
-    if not mask.any():
-        return None, None
-    max_row = df[mask].iloc[0]
-    obj_cols = [c for c in df.columns if c != 'Student Name']
-    total_max = sum(float(max_row[c]) for c in obj_cols if str(max_row[c]).strip() != '')
-    df = df[~mask].copy().rename(columns={df.columns[0]: 'Student Name'})
-    for c in obj_cols:
-        df[c] = pd.to_numeric(df[c], errors='coerce').fillna(0)
-    df['Obtained'] = df[obj_cols].sum(axis=1)
-    df['Pct'] = (df['Obtained'] / total_max * 100).round(1) if total_max else 0.0
-    return meta, df
-
-def get_total_data(f):
-    raw = pd.read_excel(f, header=None)
-    meta = {}
-    for c in raw.iloc[0, :]:
-        val = str(c).strip()
-        if ':' in val:
-            k, v = val.split(':', 1)
-            meta[k.strip()] = v.strip()
-    headers = [str(x).strip() for x in raw.iloc[1, :].tolist()]
-    total_idx = None
-    for i in range(2, len(raw)):
-        if 'total' in str(raw.iloc[i, 0]).lower():
-            total_idx = i
-            break
-    if total_idx is None:
-        return None, None
-    try:
-        max_total = float(raw.iloc[total_idx, 1])
-    except:
-        max_total = 100.0
-    data = raw.iloc[2:, :].copy()
-    data.columns = headers
-    data = data[data.iloc[:, 0].astype(str).str.lower().str.contains('total') == False]
-    data = data.rename(columns={data.columns[0]: 'Student Name'})
-    total_col = [c for c in data.columns if 'total' in str(c).lower()]
-    if not total_col:
-        return None, None
-    total_col = total_col[0]
-    data[total_col] = pd.to_numeric(data[total_col], errors='coerce').fillna(0)
-    data['Pct'] = (data[total_col] / max_total * 100).round(1) if max_total else 0.0
-    return meta, data
-
 def color_cell(v):
     if v == 'Growth': return 'background-color: green; color: white'
     if v == 'Decay': return 'background-color: red; color: white'
@@ -77,6 +22,7 @@ def color_cell(v):
 
 tab1, tab2, tab3 = st.tabs(["📊 Single Assessment", "🔄 Compare Objectives", "🆚 Internal vs External"])
 
+# ================= TAB 1 (OBJECTIVES ONLY) =================
 with tab1:
     st.header("Step 1: Upload Student Marks Excel")
     st.info("Row1: Info | Row2: Headers | Row3: 'Points for Objectives' + max marks | Row4+: Marks. Leave empty or 'A' for absent.")
@@ -150,7 +96,7 @@ with tab1:
                 ge60 = (rdf['Total %'] >= 60).sum() / ts * 100 if ts else 0
                 gt60 = (rdf['Total %'] > 60).sum() / ts * 100 if ts else 0
                 gt75 = (rdf['Total %'] > 75).sum() / ts * 100 if ts else 0
-                ov = "Outstanding" if gt75 >= 90 else "Very Good" if False else ("Very Good" if gt60 >= 90 else "Good" if gt60 >= 75 else "Acceptable" if ge60 >= 60 else "Below Acceptable")
+                ov = "Outstanding" if gt75 >= 90 else "Very Good" if gt60 >= 90 else "Good" if gt60 >= 75 else "Acceptable" if ge60 >= 60 else "Below Acceptable"
                 st.success(f"**{ov}** (Max {total_max})")
                 cdf = rdf['Level'].value_counts().reset_index(); cdf.columns = ['Level', 'Count']
                 cdf['Level'] = pd.Categorical(cdf['Level'], categories=ORDER, ordered=True); cdf = cdf.sort_values('Level')
@@ -164,6 +110,7 @@ with tab1:
                 eb = io.BytesIO(); rdf.to_excel(eb, index=False)
                 st.download_button("📊 Download Excel", eb.getvalue(), "Report.xlsx")
 
+# ================= TAB 2 (OBJECTIVES ONLY) =================
 with tab2:
     st.header("Compare Multiple Assessments (Objectives)")
     st.info("Choose number of assessments. Upload files (same format as Tab 1). Each score → % before comparing.")
@@ -177,9 +124,26 @@ with tab2:
         pct_cols = []
         names = []
         for i, f in enumerate(files):
-            meta, df = get_objectives_data(f)
-            if meta is None:
+            meta_raw = pd.read_excel(f, nrows=1, header=None)
+            f.seek(0)
+            meta = {}
+            for c in meta_raw.columns:
+                val = str(meta_raw.iloc[0, c]).strip()
+                if ':' in val:
+                    k, v = val.split(':', 1)
+                    meta[k.strip()] = v.strip()
+            df = pd.read_excel(f, header=1)
+            mask = df.iloc[:, 0].astype(str).str.contains("Points for Objectives", case=False, na=False)
+            if not mask.any():
                 st.error(f"❌ File {i+1} missing 'Points for Objectives' row."); st.stop()
+            max_row = df[mask].iloc[0]
+            obj_cols = [c for c in df.columns if c != 'Student Name']
+            total_max = sum(float(max_row[c]) for c in obj_cols if str(max_row[c]).strip() != '')
+            df = df[~mask].copy().rename(columns={df.columns[0]: 'Student Name'})
+            for c in obj_cols:
+                df[c] = pd.to_numeric(df[c], errors='coerce').fillna(0)
+            df['Obtained'] = df[obj_cols].sum(axis=1)
+            df['Pct'] = (df['Obtained'] / total_max * 100).round(1) if total_max else 0.0
             metas.append(meta)
             names.append(meta.get('Assessment name', f'Assessment {i+1}'))
             col = f'Pct{i+1}'
@@ -201,7 +165,6 @@ with tab2:
         m1, m2, m3 = st.columns(3)
         m1.metric("🟩 Growth", gc); m2.metric("🟥 Decay", dc); m3.metric("🟨 Same", sc)
         cd = pd.DataFrame({'Status': ['Growth', 'Decay', 'Same'], 'Count': [gc, dc, sc]})
-        cd['Status'] = pd.Categorical(cd['Status'], categories=['Decay', 'Same', 'Growth' if False else 'Growth'], ordered=True)
         cd['Status'] = pd.Categorical(cd['Status'], categories=['Decay', 'Same', 'Growth'], ordered=True)
         v1, v2 = st.columns(2)
         with v1:
@@ -219,23 +182,75 @@ with tab2:
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Comparison.xlsx")
 
+# ================= TAB 3 (TOTAL ONLY) =================
 with tab3:
     st.header("Comparison between Internal and External Assessments (Total)")
     st.info("Upload two files. Excel: Row1 Info | Row2 Headers (Student Name, Total) | Row3: 'Total' + max mark (e.g., 40) | Row4+: marks.")
     f1 = st.file_uploader("📄 Internal Assessment", type=["xlsx", "xls"], key="intf")
     f2 = st.file_uploader("📄 External Assessment", type=["xlsx", "xls"], key="extf")
     if f1 and f2:
-        m1, df1 = get_total_data(f1)
-        m2, df2 = get_total_data(f2)
-        if m1 is None or m2 is None:
-            st.error("❌ One of the files missing 'Total' row/max."); st.stop()
+        raw1 = pd.read_excel(f1, header=None)
+        meta1 = {}
+        for c in raw1.iloc[0, :]:
+            val = str(c).strip()
+            if ':' in val:
+                k, v = val.split(':', 1)
+                meta1[k.strip()] = v.strip()
+        headers1 = [str(x).strip() for x in raw1.iloc[1, :].tolist()]
+        total_idx1 = None
+        for i in range(2, len(raw1)):
+            if 'total' in str(raw1.iloc[i, 0]).lower():
+                total_idx1 = i
+                break
+        if total_idx1 is None:
+            st.error("❌ Internal file missing 'Total' row."); st.stop()
+        try:
+            max_total1 = float(raw1.iloc[total_idx1, 1])
+        except:
+            max_total1 = 100.0
+        data1 = raw1.iloc[2:, :].copy()
+        data1.columns = headers1
+        data1 = data1[data1.iloc[:, 0].astype(str).str.lower().str.contains('total') == False]
+        data1 = data1.rename(columns={data1.columns[0]: 'Student Name'})
+        total_col1 = [c for c in data1.columns if 'total' in str(c).lower()][0]
+        data1[total_col1] = pd.to_numeric(data1[total_col1], errors='coerce').fillna(0)
+        data1['Pct'] = (data1[total_col1] / max_total1 * 100).round(1) if max_total1 else 0.0
+        
+        raw2 = pd.read_excel(f2, header=None)
+        meta2 = {}
+        for c in raw2.iloc[0, :]:
+            val = str(c).strip()
+            if ':' in val:
+                k, v = val.split(':', 1)
+                meta2[k.strip()] = v.strip()
+        headers2 = [str(x).strip() for x in raw2.iloc[1, :].tolist()]
+        total_idx2 = None
+        for i in range(2, len(raw2)):
+            if 'total' in str(raw2.iloc[i, 0]).lower():
+                total_idx2 = i
+                break
+        if total_idx2 is None:
+            st.error("❌ External file missing 'Total' row."); st.stop()
+        try:
+            max_total2 = float(raw2.iloc[total_idx2, 1])
+        except:
+            max_total2 = 100.0
+        data2 = raw2.iloc[2:, :].copy()
+        data2.columns = headers2
+        data2 = data2[data2.iloc[:, 0].astype(str).str.lower().str.contains('total') == False]
+        data2 = data2.rename(columns={data2.columns[0]: 'Student Name'})
+        total_col2 = [c for c in data2.columns if 'total' in str(c).lower()][0]
+        data2[total_col2] = pd.to_numeric(data=total_col2, errors='coerce').fillna(0) if False else pd.to_numeric(data2[total_col2], errors='coerce').fillna(0)
+        data2['Pct'] = (data2[total_col2] / max_total2 * 100).round(1) if max_total2 else 0.0
+        
         st.subheader("📋 Assessment Information")
-        st.markdown(f"**Internal:** 👩‍🏫 {m1.get('Teacher Name', 'N/A')} | 🏫 {m1.get('Class', 'N/A')} | 📅 {m1.get('Date', 'N/A')} | 📝 {m1.get('Assessment name', 'N/A')} | 📚 {m1.get('Subject', 'N/A')}")
-        st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A')} | 🏫 {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')} | 📚 {m2.get('Subject', 'N/A')}")
-        st.markdown(f"### 📊 Comparing: **{m1.get('Assessment name', 'Internal')} / {m2.get('Assessment name', 'External')}** | 📚 Subject: **{m1.get('Subject', 'N/A')}**")
+        st.markdown(f"**Internal:** 👩‍🏫 {meta1.get('Teacher Name', 'N/A')} | 🏫 {meta1.get('Class', 'N/A')} | 📅 {meta1.get('Date', 'N/A')} | 📝 {meta1.get('Assessment name', 'N/A')} | 📚 {meta1.get('Subject', 'N/A')}")
+        st.markdown(f"**External:** 👩‍🏫 {meta2.get('Teacher Name', 'N/A')} | 🏫 {meta2.get('Class', 'N/A')} | 📅 {meta2.get('Date', 'N/A')} | 📝 {meta2.get('Assessment name', 'N/A')} | 📚 {meta2.get('Subject', 'N/A')}")
+        st.markdown(f"### 📊 Comparing: **{meta1.get('Assessment name', 'Internal')} / {meta2.get('Assessment name', 'External')}** | 📚 Subject: **{meta1.get('Subject', 'N/A')}**")
+        
         merged = pd.merge(
-            df1[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct1'}),
-            df2[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct2'}),
+            data1[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct1'}),
+            data2[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct2'}),
             on='Student Name', how='outer'
         ).fillna(0)
         merged['Difference'] = (merged['Pct2'] - merged['Pct1']).round(1)
@@ -245,7 +260,6 @@ with tab3:
         cnt = merged['Status'].value_counts().to_dict()
         gc, dc, sc = cnt.get('Growth', 0), cnt.get('Decay', 0), cnt.get('Same', 0)
         st.subheader("📢 Summary")
-        mc1, mc2, mc3 = st.columns(1)[0], None, None
         mc1, mc2, mc3 = st.columns(3)
         mc1.metric("🟩 Growth", gc); mc2.metric("🟥 Decay", dc); mc3.metric("🟨 Same", sc)
         cd = pd.DataFrame({'Status': ['Growth', 'Decay', 'Same'], 'Count': [gc, dc, sc]})
