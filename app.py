@@ -17,7 +17,7 @@ st.title("📊 SAIS Analyzer")
 COLORS = {'Absent':'#808080','Fail':'#d62728','Acceptable':'#ff7f0e','Good':'#2ca02c','Very Good':'#1f77b4','Outstanding':'#9467bd'}
 ORDER = ['Absent','Fail','Acceptable','Good','Very Good','Outstanding']
 
-# ---------- Helper: read metadata + convert marks to % ----------
+# ---------- Helper for Tab 1 & 2 (objectives) ----------
 def read_meta_and_pct(f):
     meta_raw = pd.read_excel(f, nrows=1, header=None)
     f.seek(0)
@@ -42,7 +42,34 @@ def read_meta_and_pct(f):
     df['Pct'] = (df['Obtained'] / total_max * 100).round(1) if total_max else 0.0
     return meta_info, df
 
-# ---------- Helper: color cells ----------
+# ---------- Helper for Tab 3 (Total column only) ----------
+def read_internal_external(f):
+    meta_raw = pd.read_excel(f, nrows=1, header=None)
+    f.seek(0)
+    meta_info = {}
+    for c in meta_raw.columns:
+        val = str(meta_raw.iloc[0, c]).strip()
+        if ':' in val:
+            k, v = val.split(':', 1)
+            meta_info[k.strip()] = v.strip()
+    df = pd.read_excel(f, header=1)
+    # Row with max total: first column contains 'Total'
+    mask = df.iloc[:, 0].astype(str).str.contains("Total", case=False, na=False)
+    if not mask.any():
+        return None, None
+    max_row = df[mask].iloc[0]
+    total_col = [c for c in df.columns if 'total' in str(c).lower()]
+    if not total_col:
+        return None, None
+    total_col = total_col[0]
+    max_total = float(max_row[total_col]) if str(max_row[total_col]).strip() != '' else 100.0
+    student_df = df[~mask].copy()
+    student_df = student_df.rename(columns={student_df.columns[0]: 'Student Name'})
+    student_df[total_col] = pd.to_numeric(student_df[total_col], errors='coerce').fillna(0)
+    student_df['Pct'] = (student_df[total_col] / max_total * 100).round(1) if max_total else 0.0
+    return meta_info, student_df
+
+# ---------- Cell color ----------
 def color_cell(v):
     if v == 'Growth': return 'background-color: green; color: white'
     if v == 'Decay': return 'background-color: red; color: white'
@@ -167,6 +194,7 @@ with tab2:
         merged = None
         pct_cols = []
         names = []
+        url = None
         for i, f in enumerate(files):
             meta, df = read_meta_and_pct(f)
             if meta is None:
@@ -216,18 +244,20 @@ with tab2:
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Comparison.xlsx")
 
-# ================= TAB 3 =================
+# ================= TAB 3 (FIXED: Total column logic) =================
 with tab3:
     st.header("Comparison between Internal and External Assessments")
-    st.info("Upload two files (Internal & External). Scores converted to % before comparison.")
+    st.info("Upload two files. Excel format: Row1 Info | Row2 Headers (Student Name, Total) | Row3: 'Total' + max mark (e.g., 40 or 100) | Row4+: marks. Scores → % before compare.")
     f1 = st.file_uploader("📄 Internal Assessment", type=["xlsx", "xls"], key="intf")
     f2 = st.file_uploader("📄 External Assessment", type=["xlsx", "xls"], key="extf")
 
     if f1 and f2:
-        m1, df1 = read_meta_and_pct(f1)
-        m2, df2 = read_meta_and_pct(f2)
+        m1, df1 = read_internal_external(f1)
+        m2, m2_df = read_internal_external(f2)  # note: fixed variable
+        # Actually use m2, df2 correctly:
+        m2, df2 = read_internal_external(f2)
         if m1 is None or m2 is None:
-            st.error("❌ One of the files missing 'Points for Objectives' row."); st.stop()
+            st.error("❌ One of the files missing 'Total' row/max."); st.stop()
 
         st.subheader("📋 Assessment Information")
         st.markdown(f"**Internal:** 👩‍🏫 {m1.get('Teacher Name', 'N/A')} | 🏫 {m1.get('Class', 'N/A')} | 📅 {m1.get('Date', 'N/A')} | 📝 {m1.get('Assessment name', 'N/A')}")
