@@ -6,12 +6,9 @@ import os
 
 st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
 
-# ---------- Centered Bigger Logo ----------
 if os.path.exists("logo.png"):
     try:
-        _, center_col, _ = st.columns([1, 2, 1])
-        with center_col:
-            st.image("logo.png", width=200)
+        st.image("logo.png", width=120)
     except Exception:
         pass
 
@@ -47,36 +44,30 @@ def read_meta_and_pct(f):
 
 # ---------- Helper for Tab 3 (Total column only) ----------
 def read_internal_external(f):
-    raw = pd.read_excel(f, header=None)
+    meta_raw = pd.read_excel(f, nrows=1, header=None)
+    f.seek(0)
     meta_info = {}
-    for c in raw.iloc[0, :]:
-        val = str(c).strip()
+    for c in meta_raw.columns:
+        val = str(meta_raw.iloc[0, c]).strip()
         if ':' in val:
             k, v = val.split(':', 1)
             meta_info[k.strip()] = v.strip()
-    headers = [str(x).strip() for x in raw.iloc[1, :].tolist()]
-    total_idx = None
-    for i in range(2, len(raw)):
-        if 'total' in str(raw.iloc[i, 0]).lower():
-            total_idx = i
-            break
-    if total_idx is None:
+    df = pd.read_excel(f, header=1)
+    # Row with max total: first column contains 'Total'
+    mask = df.iloc[:, 0].astype(str).str.contains("Total", case=False, na=False)
+    if not mask.any():
         return None, None
-    try:
-        max_total = float(raw.iloc[total_idx, 1])
-    except:
-        max_total = 100.0
-    data = raw.iloc[2:, :].copy()
-    data.columns = headers
-    data = data[data.iloc[:, 0].astype(str).str.lower().str.contains('total') == False]
-    data = data.rename(columns={data.columns[0]: 'Student Name'})
-    total_col = [c for c in data.columns if 'total' in str(c).lower()]
+    max_row = df[mask].iloc[0]
+    total_col = [c for c in df.columns if 'total' in str(c).lower()]
     if not total_col:
         return None, None
     total_col = total_col[0]
-    data[total_col] = pd.to_numeric(data[total_col], errors='coerce').fillna(0)
-    data['Pct'] = (data[total_col] / max_total * 100).round(1) if max_total else 0.0
-    return meta_info, data
+    max_total = float(max_row[total_col]) if str(max_row[total_col]).strip() != '' else 100.0
+    student_df = df[~mask].copy()
+    student_df = student_df.rename(columns={student_df.columns[0]: 'Student Name'})
+    student_df[total_col] = pd.to_numeric(student_df[total_col], errors='coerce').fillna(0)
+    student_df['Pct'] = (student_df[total_col] / max_total * 100).round(1) if max_total else 0.0
+    return meta_info, student_df
 
 # ---------- Cell color ----------
 def color_cell(v):
@@ -112,7 +103,6 @@ with tab1:
         m2.markdown(f"**🏫 Class:** {meta_info.get('Class', 'N/A')}")
         m3.markdown(f"**📅 Date:** {meta_info.get('Date', 'N/A')}")
         m4.markdown(f"**📝 Assessment:** {meta_info.get('Assessment name', 'N/A')}")
-        st.markdown(f"### 📝 Assessment Name: **{meta_info.get('Assessment name', 'N/A')}**")
 
         raw = pd.read_excel(up_file, header=1)
         obj_names = [c for c in raw.columns if c != 'Student Name']
@@ -204,6 +194,7 @@ with tab2:
         merged = None
         pct_cols = []
         names = []
+        url = None
         for i, f in enumerate(files):
             meta, df = read_meta_and_pct(f)
             if meta is None:
@@ -218,7 +209,7 @@ with tab2:
         st.subheader("📋 Assessment Information")
         for i, m in enumerate(metas):
             st.markdown(f"**File {i+1} ({m.get('Assessment name', 'N/A')}):** 👩‍🏫 {m.get('Teacher Name', 'N/A')} | 🏫 {m.get('Class', 'N/A')} | 📅 {m.get('Date', 'N/A')}")
-        st.markdown(f"### 📊 Comparing Assessments: **{' / '.join(names)}**")
+        st.success(f"📊 Comparison between {' / '.join(names)}")
 
         merged[pct_cols] = merged[pct_cols].fillna(0)
         merged['Difference'] = (merged[pct_cols[-1]] - merged[pct_cols[0]]).round(1)
@@ -253,15 +244,17 @@ with tab2:
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Comparison.xlsx")
 
-# ================= TAB 3 =================
+# ================= TAB 3 (FIXED: Total column logic) =================
 with tab3:
     st.header("Comparison between Internal and External Assessments")
-    st.info("Upload two files. Excel: Row1 Info | Row2 Headers (Student Name, Total) | Row3: 'Total' + max mark (e.g., 40) | Row4+: marks.")
+    st.info("Upload two files. Excel format: Row1 Info | Row2 Headers (Student Name, Total) | Row3: 'Total' + max mark (e.g., 40 or 100) | Row4+: marks. Scores → % before compare.")
     f1 = st.file_uploader("📄 Internal Assessment", type=["xlsx", "xls"], key="intf")
     f2 = st.file_uploader("📄 External Assessment", type=["xlsx", "xls"], key="extf")
 
     if f1 and f2:
         m1, df1 = read_internal_external(f1)
+        m2, m2_df = read_internal_external(f2)  # note: fixed variable
+        # Actually use m2, df2 correctly:
         m2, df2 = read_internal_external(f2)
         if m1 is None or m2 is None:
             st.error("❌ One of the files missing 'Total' row/max."); st.stop()
@@ -269,7 +262,7 @@ with tab3:
         st.subheader("📋 Assessment Information")
         st.markdown(f"**Internal:** 👩‍🏫 {m1.get('Teacher Name', 'N/A')} | 🏫 {m1.get('Class', 'N/A')} | 📅 {m1.get('Date', 'N/A')} | 📝 {m1.get('Assessment name', 'N/A')}")
         st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A')} | 🏫 {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')}")
-        st.markdown(f"### 📊 Comparing: **{m1.get('Assessment name', 'Internal')} / {m2.get('Assessment name', 'External')}**")
+        st.success(f"📊 Comparison between {m1.get('Assessment name', 'Internal')} / {m2.get('Assessment name', 'External')}")
 
         merged = pd.merge(
             df1[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct1'}),
@@ -290,11 +283,11 @@ with tab3:
 
         cd = pd.DataFrame({'Status': ['Growth', 'Decay', 'Same'], 'Count': [gc, dc, sc]})
         cd['Status'] = pd.Categorical(cd['Status'], categories=['Decay', 'Same', 'Growth'], ordered=True)
-        v1, _ = st.columns([1,1])
+        v1, v2 = st.columns(2)
         with v1:
             st.markdown("**Bar Chart**")
             st.plotly_chart(px.bar(cd, x='Status', y='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}), use_container_width=True)
-        with _:
+        with v2:
             st.markdown("**Pie Chart**")
             pf = px.pie(cd, names='Status', values='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}, hole=0.3)
             pf.update_traces(textinfo='percent+label'); st.plotly_chart(pf, use_container_width=True)
