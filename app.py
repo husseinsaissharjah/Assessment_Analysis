@@ -34,7 +34,8 @@ def read_objectives_file(f):
     if not mask.any():
         return None, None
     max_row = df[mask].iloc[0]
-    obj_cols = [c for c in df.columns if c != 'Student Name']
+    # FIX: exclude any 'Total' column so it isn't summed in as an extra objective
+    obj_cols = [c for c in df.columns if c != 'Student Name' and 'total' not in str(c).lower()]
     total_max = sum(float(max_row[c]) for c in obj_cols if str(max_row[c]).strip() != '')
     df = df[~mask].copy().rename(columns={df.columns[0]: 'Student Name'})
     for c in obj_cols:
@@ -100,7 +101,8 @@ with tab1:
         st.markdown(f"### 📝 Name: **{meta_info.get('Assessment name','N/A')}** | 📚 Subject: **{meta_info.get('Subject','N/A')}**")
 
         raw = pd.read_excel(up_file, header=1)
-        obj_names = [c for c in raw.columns if c != 'Student Name']
+        # FIX: exclude any 'Total' column so it isn't treated as an objective
+        obj_names = [c for c in raw.columns if c != 'Student Name' and 'total' not in str(c).lower()]
         mask = raw.iloc[:,0].astype(str).str.contains("Points for Objectives", case=False, na=False)
         if not mask.any():
             st.error("❌ Need 'Points for Objectives' row."); st.stop()
@@ -114,7 +116,7 @@ with tab1:
                 if isinstance(v,str) and 'a' in v.lower(): has_A = True
                 elif not (pd.isna(v) or (isinstance(v,str) and v.strip()=='')): all_empty = False
             return has_A or all_empty
-        student_df['Absent'] = student_df.apply(is_absent, axis=1) if False else student_df.apply(is_absent, axis=1)
+        student_df['Absent'] = student_df.apply(is_absent, axis=1)
         for c in obj_names:
             student_df[c] = pd.to_numeric(student_df[c], errors='coerce').fillna(0)
         total_max = sum(obj_max)
