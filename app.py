@@ -62,7 +62,6 @@ def read_total_file(f):
         if ':' in val:
             k, v = val.split(':', 1)
             meta[k.strip()] = v.strip()
-    headers = [str(x).strip() for x in raw.iloc[1, :].tolist() if False else raw.iloc[1, :].tolist()]
     headers = [str(x).strip() for x in raw.iloc[1, :].tolist()]
     total_idx = None
     for i in range(2, len(raw)):
@@ -203,8 +202,7 @@ elif page == "👨‍🎓 Student Analysis":
                 ov = "Outstanding" if gt75 >= 90 else "Very Good" if gt60 >= 90 else "Good" if gt60 >= 75 else "Acceptable" if ge60 >= 60 else "Below Acceptable"
                 st.success(f"**{ov}** (Max {total_max})")
                 cdf = rdf['Level'].value_counts().reset_index(); cdf.columns = ['Level', 'Count']
-                cdf['Level'] = pd.Categorical(cdf['Level'], categories=ORDER, ordered=True); cdf = ki
-                cdf = cdf.sort_values('Level')
+                cdf['Level'] = pd.Categorical(cdf['Level'], categories=ORDER, ordered=True); cdf = cdf.sort_values('Level')
                 v1, v2 = st.columns(2)
                 with v1:
                     st.plotly_chart(px.bar(cdf, x='Level', y='Count', color='Level', category_orders={"Level": ORDER}, color_discrete_map=COLORS), use_container_width=True)
