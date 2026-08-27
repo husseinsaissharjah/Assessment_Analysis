@@ -3,6 +3,7 @@ import sqlite3
 import hashlib
 import secrets
 import pandas as pd
+import io
 
 DB = "sais.db"
 
@@ -88,10 +89,14 @@ def add_user(username, name, role):
     pwd = secrets.token_urlsafe(8)
     h = hashlib.sha256(pwd.encode()).hexdigest()
     try:
-        db_exec("INSERT INTO users (username, name, role, password_hash) VALUES (?,?,?,?)", (username, name, role, h))
+        db_exec("INSERT INTO users (username, name, role, password_hash) VALUES (?,?,?,?)", (username, name, "teacher" if role=="teacher" else "admin", h))
         return True, pwd
     except sqlite3.IntegrityError:
         return False, None
+
+def get_id(table, column, value):
+    rows = db_query(f"SELECT id FROM {table} WHERE {column}=?", (value,))
+    return rows[0][0] if rows else None
 
 init_db()
 
@@ -118,7 +123,7 @@ else:
 
     if user['role'] == 'admin':
         st.title("🛠️ Admin Panel")
-        tab = st.sidebar.radio("Admin Menu", ["Users", "Sections", "Subjects", "Semesters/Years", "Mark Components"])
+        tab = st.sidebar.radio("Admin Menu", ["Users", "Sections", "Subjects", "Semesters/Years", "Mark Components", "Bulk Students"])
 
         if tab == "Users":
             st.subheader("Add User")
@@ -179,6 +184,61 @@ else:
             if st.button("Remove Component"):
                 db_exec("DELETE FROM mark_components WHERE id=?", (del_id,))
                 st.success("Removed")
+
+        elif tab == "Bulk Students":
+            st.subheader("📥 Download Template")
+            comps = db_query("SELECT name FROM mark_components")
+            comp_names = [c[0] for c in comps] if comps else ["Quiz 1", "Quiz 2", "Test", "Final"]
+            cols = ["Student ID", "Student Name", "Class", "Section", "Gender", "Subject", "Semester", "Academic Year"] + comp_names
+            tpl = pd.DataFrame(columns=cols)
+            buf = io.BytesIO()
+            tpl.to_excel(buf, index=False)
+            st.download_button("Download Excel Template", buf.getvalue(), "student_template.xlsx")
+            st.caption("Fill it with your data. Section/Semester/Year/Subject must match what you added in the admin menus.")
+
+            st.subheader("📤 Upload Filled Excel")
+            up = st.file_uploader("Upload", type=["xlsx", "xls"], key="bulk")
+            if up:
+                df = pd.read_excel(up)
+                errs = []
+                for i, row in df.iterrows():
+                    sid = str(row["Student ID"]).strip()
+                    sname = str(row["Student Name"]).strip()
+                    cls = str(row["Class"]).strip()
+                    sec = str(row["Section"]).strip()
+                    gen = str(row["Gender"]).strip()
+                    subj = str(row["Subject"]).strip()
+                    sem = str(row["Semester"]).strip()
+                    yr = str(row["Academic Year"]).strip()
+                    sec_id = get_id("sections", "section_name", sec)
+                    subj_id = get_id("subjects", "subject_name", subj)
+                    sem_id = get_id("semesters", "name", sem)
+                    yr_id = get_id("academic_years", "year", yr)
+                    if None in (sec_id, subj_id, sem_id, yr_id):
+                        errs.append(f"Row {i+2}: Missing section/subject/semester/year in DB")
+                        continue
+                    # insert/update student
+                    existing = db_query("SELECT id, section_id, level FROM students WHERE student_id=?", (sid,))
+                    if not existing:
+                        lv = db_query("SELECT level FROM sections WHERE id=?", (sec_id,))[0][0]
+                        db_exec("INSERT INTO students (student_id, name, class, section_id, level, gender) VALUES (?,?,?,?,?,?)",
+                                (sid, sname, cls, sec_id, lv, gen))
+                        stu_db_id = db_query("SELECT id FROM students WHERE student_id=?", (sid,))[0][0]
+                    else:
+                        stu_db_id = existing[0][0]
+                    # marks
+                    for comp in comp_names:
+                        val = row.get(comp)
+                        if pd.notna(val) and str(val).strip() != "":
+                            comp_id = get_id("mark_components", "name", comp)
+                            if comp_id:
+                                db_exec("INSERT INTO marks (student_id, subject_id, semester_id, year_id, component_id, value) VALUES (?,?,?,?,?,?)",
+                                        (stu_db_id, subj_id, sem_id, yr_id, comp_id, float(val)))
+                if errs:
+                    st.error("Errors:\n" + "\n".join(errs))
+                else:
+                    st.success("✅ All students and marks imported!")
+
     else:
         st.title(f"👋 Welcome, {user['name']}")
         st.info("Analyzer tools will be connected soon.")
