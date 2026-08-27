@@ -8,18 +8,58 @@ DB = "sais.db"
 def init_db():
     conn = sqlite3.connect(DB)
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS users (
+    c.executescript('''
+    CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         name TEXT,
         role TEXT NOT NULL,
         password_hash TEXT NOT NULL
-    )''')
-    # Default admin (only first time)
+    );
+    CREATE TABLE IF NOT EXISTS sections (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        section_name TEXT NOT NULL,
+        gender TEXT,
+        level TEXT
+    );
+    CREATE TABLE IF NOT EXISTS students (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id TEXT UNIQUE,
+        name TEXT,
+        class TEXT,
+        section_id INTEGER,
+        level TEXT,
+        gender TEXT
+    );
+    CREATE TABLE IF NOT EXISTS semesters (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT
+    );
+    CREATE TABLE IF NOT EXISTS academic_years (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        year TEXT
+    );
+    CREATE TABLE IF NOT EXISTS subjects (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        subject_name TEXT
+    );
+    CREATE TABLE IF NOT EXISTS mark_components (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT
+    );
+    CREATE TABLE IF NOT EXISTS marks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER,
+        subject_id INTEGER,
+        semester_id INTEGER,
+        year_id INTEGER,
+        component_id INTEGER,
+        value REAL
+    );
+    ''')
     cur = c.execute("SELECT COUNT(*) FROM users WHERE username=?", ("admin",))
     if cur.fetchone()[0] == 0:
-        pwd = "admin123"
-        h = hashlib.sha256(pwd.encode()).hexdigest()
+        h = hashlib.sha256("admin123".encode()).hexdigest()
         c.execute("INSERT INTO users (username, name, role, password_hash) VALUES (?,?,?,?)",
                   ("admin", "Administrator", "admin", h))
     conn.commit()
@@ -27,9 +67,7 @@ def init_db():
 
 def check_login(username, password):
     conn = sqlite3.connect(DB)
-    c = conn.cursor()
-    cur = c.execute("SELECT id, name, role, password_hash FROM users WHERE username=?", (username,))
-    row = cur.fetchone()
+    row = conn.execute("SELECT id, name, role, password_hash FROM users WHERE username=?", (username,)).fetchone()
     conn.close()
     if row and row[3] == hashlib.sha256(password.encode()).hexdigest():
         return {"id": row[0], "name": row[1], "role": row[2]}
@@ -38,18 +76,13 @@ def check_login(username, password):
 def add_user(username, name, role):
     pwd = secrets.token_urlsafe(8)
     h = hashlib.sha256(pwd.encode()).hexdigest()
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
     try:
-        c.execute("INSERT INTO users (username, name, role, password_hash) VALUES (?,?,?,?)",
-                  (username, name, role, h))
-        conn.commit()
-        ok = True
+        conn = sqlite3.connect(DB)
+        conn.execute("INSERT INTO users (username, name, role, password_hash) VALUES (?,?,?,?)", (username, name, role, h))
+        conn.commit(); conn.close()
+        return True, pwd
     except sqlite3.IntegrityError:
-        ok = False
-        pwd = None
-    conn.close()
-    return ok, pwd
+        return False, None
 
 init_db()
 
@@ -76,22 +109,68 @@ else:
 
     if user['role'] == 'admin':
         st.title("🛠️ Admin Panel")
-        st.subheader("Add New User")
-        nu = st.text_input("Username")
-        nn = st.text_input("Full Name")
-        nr = st.selectbox("Role", ["teacher", "admin"])
-        if st.button("Create User"):
-            if nu and nn:
-                ok, gen_pwd = add_user(nu, nn, nr)
-                if ok:
-                    st.success(f"✅ User **{nu}** created! Generated password: `{gen_pwd}` (share securely)")
-                else:
-                    st.error("❌ Username already exists")
-        st.subheader("Existing Users")
-        conn = sqlite3.connect(DB)
-        users = conn.execute("SELECT username, name, role FROM users").fetchall()
-        conn.close()
-        st.table(users)
+        tab = st.sidebar.radio("Admin Menu", ["Users", "Sections", "Subjects", "Semesters/Years", "Mark Components"])
+
+        if tab == "Users":
+            st.subheader("Add User")
+            nu = st.text_input("Username")
+            nn = st.text_input("Full Name")
+            nr = st.selectbox("Role", ["teacher", "admin"])
+            if st.button("Create User"):
+                if nu and nn:
+                    ok, pwd = add_user(nu, nn, nr)
+                    if ok: st.success(f"✅ Created `{nu}` | Password: `{pwd}`")
+                    else: st.error("Username exists")
+            st.subheader("All Users")
+            st.table(sqlite3.connect(DB).execute("SELECT username, name, role FROM users").fetchall())
+
+        elif tab == "Sections":
+            st.subheader("Add Section")
+            sn = st.text_input("Section Name")
+            gd = st.selectbox("Gender", ["Boys", "Girls", "Mixed"])
+            lv = st.selectbox("Level", ["KG", "Elementary", "Middle", "High School"])
+            if st.button("Add Section"):
+                if sn:
+                    sqlite3.connect(DB).execute("INSERT INTO sections (section_name, gender, level) VALUES (?,?,?)", (sn, gd, lv))
+                    st.success("Section added")
+            st.subheader("Sections")
+            st.table(sqlite3.connect(DB).execute("SELECT section_name, gender, level FROM sections").fetchall())
+
+        elif tab == "Subjects":
+            st.subheader("Add Subject")
+            sb = st.text_input("Subject Name")
+            if st.button("Add Subject"):
+                if sb:
+                    sqlite3.connect(DB).execute("INSERT INTO subjects (subject_name) VALUES (?)", (sb,))
+                    st.success("Subject added")
+            st.subheader("Subjects")
+            st.table(sqlite3.connect(DB).execute("SELECT subject_name FROM subjects").fetchall())
+
+        elif tab == "Semesters/Years":
+            st.subheader("Add Semester")
+            sm = st.text_input("Semester (e.g. S1)")
+            if st.button("Add Semester"):
+                if sm: sqlite3.connect(DB).execute("INSERT INTO semesters (name) VALUES (?)", (sm,))
+            st.subheader("Add Academic Year")
+            ay = st.text_input("Year (e.g. 2024-2025)")
+            if st.button("Add Year"):
+                if ay: sqlite3.connect(DB).execute("INSERT INTO academic_years (year) VALUES (?)", (ay,))
+            st.subheader("Semesters / Years")
+            st.write(sqlite3.connect(DB).execute("SELECT name FROM semesters").fetchall())
+            st.write(sqlite3.connect(DB).execute("SELECT year FROM academic_years").fetchall())
+
+        elif tab == "Mark Components":
+            st.subheader("Add Component (Quiz/Test/Final)")
+            mc = st.text_input("Component Name")
+            if st.button("Add Component"):
+                if mc: sqlite3.connect(DB).execute("INSERT INTO mark_components (name) VALUES (?)", (mc,))
+            st.subheader("Existing Components")
+            comps = sqlite3.connect(DB).execute("SELECT id, name FROM mark_components").fetchall()
+            st.table(comps)
+            del_id = st.number_input("Component ID to remove", min_value=1, step=1)
+            if st.button("Remove Component"):
+                sqlite3.connect(DB).execute("DELETE FROM mark_components WHERE id=?", (del_id,))
+                st.success("Removed")
     else:
         st.title(f"👋 Welcome, {user['name']}")
-        st.info("Teacher analysis tools will be connected in the next steps.")
+        st.info("Analyzer tools will be connected soon.")
