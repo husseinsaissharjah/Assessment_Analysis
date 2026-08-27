@@ -59,11 +59,16 @@ def init_db():
         value REAL
     );
     ''')
+    # Add password column if missing (safe upgrade)
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN password TEXT")
+    except:
+        pass
     cur = c.execute("SELECT COUNT(*) FROM users WHERE username=?", ("admin",))
     if cur.fetchone()[0] == 0:
         h = hashlib.sha256("admin123".encode()).hexdigest()
-        c.execute("INSERT INTO users (username, name, role, password_hash) VALUES (?,?,?,?)",
-                  ("admin", "Administrator", "admin", h))
+        c.execute("INSERT INTO users (username, name, role, password_hash, password) VALUES (?,?,?,?,?)",
+                  ("admin", "Administrator", "admin", h, "admin123"))
     conn.commit()
     conn.close()
 
@@ -105,7 +110,8 @@ def add_user(username, name, role):
     pwd = secrets.token_urlsafe(8)
     h = hashlib.sha256(pwd.encode()).hexdigest()
     try:
-        db_exec("INSERT INTO users (username, name, role, password_hash) VALUES (?,?,?,?)", (username, name, "teacher" if role=="teacher" else "admin", h))
+        db_exec("INSERT INTO users (username, name, role, password_hash, password) VALUES (?,?,?,?,?)",
+                (username, name, "teacher" if role=="teacher" else "admin", h, pwd))
         return True, pwd
     except sqlite3.IntegrityError:
         return False, None
@@ -135,7 +141,7 @@ else:
 
     if user['role'] == 'admin':
         st.title("🛠️ Admin Panel")
-        tab = st.sidebar.radio("Admin Menu", ["Users", "Sections", "Subjects", "Semesters/Years", "Mark Components", "Bulk Students"])
+        tab = st.sidebar.radio("Admin Menu", ["Users", "Sections", "Subjects", "Semesters/Years", "Mark Components", "Widgets"])
 
         if tab == "Users":
             st.subheader("Add User")
@@ -147,8 +153,9 @@ else:
                     ok, pwd = add_user(nu, nn, nr)
                     if ok: st.success(f"✅ Created `{nu}` | Password: `{pwd}`")
                     else: st.error("Username exists")
-            st.subheader("All Users")
-            st.dataframe(pd.DataFrame(db_query("SELECT username, name, role FROM users"), columns=["Username","Name","Role"]))
+            st.subheader("All Users (with passwords)")
+            st.dataframe(pd.DataFrame(db_query("SELECT username, name, role, password FROM users"),
+                                      columns=["Username","Name","Role","Password"]))
 
         elif tab == "Sections":
             st.subheader("Add Section")
@@ -206,13 +213,11 @@ else:
             buf = io.BytesIO()
             tpl.to_excel(buf, index=False)
             st.download_button("Download Excel Template", buf.getvalue(), "student_template.xlsx")
-
             st.subheader("✅ Allowed values (copy exactly)")
             st.caption("Sections: " + ", ".join([s[0] for s in db_query("SELECT section_name FROM sections")]))
             st.caption("Subjects: " + ", ".join([s[0] for s in db_query("SELECT subject_name FROM subjects")]))
             st.caption("Semesters: " + ", ".join([s[0] for s in db_query("SELECT name FROM semesters")]))
             st.caption("Years: " + ", ".join([s[0] for s in db_query("SELECT year FROM academic_years")]))
-
             st.subheader("📤 Upload Filled Excel")
             up = st.file_uploader("Upload", type=["xlsx", "xls"], key="bulk")
             if up:
@@ -234,7 +239,7 @@ else:
                     if None in (sec_id, subj_id, sem_id, yr_id):
                         errs.append(f"Row {i+2}: Section='{sec}', Subject='{subj}', Sem='{sem}', Year='{yr}' not matched")
                         continue
-                    existing = db_query("SELECT id, section_id, level FROM students WHERE student_id=?", (sid,))
+                    existing = db_query("SELECT id FROM students WHERE student_id=?", (sid,))
                     if not existing:
                         lv = db_query("SELECT level FROM sections WHERE id=?", (sec_id,))[0][0]
                         db_exec("INSERT INTO students (student_id, name, class, section_id, level, gender) VALUES (?,?,?,?,?,?)",
