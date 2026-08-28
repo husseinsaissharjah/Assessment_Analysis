@@ -6,10 +6,6 @@ import os
 
 st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
 
-# =========================================================
-# CUSTOM CSS – NO orange, NO double-blue, buttons only
-# =========================================================
-
 st.markdown("""
 <style>
 .stSidebar button {
@@ -39,10 +35,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# =========================================================
-# SIDEBAR NAVIGATION (buttons, session_state)
-# =========================================================
-
 if "page" not in st.session_state:
     st.session_state.page = "🏠 Home"
 
@@ -66,10 +58,6 @@ for p in nav_pages:
         st.session_state.page = p
 
 page = st.session_state.page
-
-# =========================================================
-# HELPERS & DATA (your original working code)
-# =========================================================
 
 COLORS = {'Absent':'#808080','Fail':'#d62728','Acceptable':'#ff7f0e','Good':'#2ca02c','Very Good':'#1f77b4','Outstanding':'#9467bd'}
 ORDER = ['Absent','Fail','Acceptable','Good','Very Good','Outstanding']
@@ -202,10 +190,6 @@ def read_total_file(f):
     data['Pct'] = (data[total_col] / max_total * 100).round(1) if max_total else 0.0
     return meta, data
 
-# =========================================================
-# PAGES (exactly your last working version)
-# =========================================================
-
 if page == "🏠 Home":
     if os.path.exists("logo.png"): st.image("logo.png", width=120)
     st.title("SAIS Analyzer")
@@ -215,7 +199,6 @@ if page == "🏠 Home":
     st.markdown("### 📌 How to use")
     c1, c2, c3 = st.columns(3)
     with c1: st.markdown("### ① Upload Data\nUpload your Excel files with student marks.")
-    with c2: st.markdown? No, use st.markdown
     with c2: st.markdown("### ② Choose Analysis\nPick the analysis type from the sidebar.")
     with c3: st.markdown("### ③ View Insights\nSee charts, gaps, and download reports.")
     st.info("Use the sidebar on the left to navigate to your analysis.")
@@ -277,7 +260,6 @@ elif page == "👨‍🎓 Student Analysis":
         for c in raw.columns:
             if c != 'Student Name':
                 if desc_row is not None:
-                    d = "desc"
                     d = str(desc_row[c]).strip()
                     if d == '' or d.lower() == 'nan': d = str(c)
                 else:
@@ -363,7 +345,7 @@ elif page == "👨‍🎓 Student Analysis":
                     st.plotly_chart(px.bar(rdf.dropna(subset=['Total %']), x='Student Name', y='Total %', color='Level', range_y=[0, 100]), use_container_width=True)
                 with v2:
                     st.subheader("📊 Level Distribution")
-                    st.plotly_chart(px.pie(cdf, names='Level', values='Count', color='Level', color_discrete_map=COLORS, hole=0.3), use_container_width=True)
+                    st.plotly_chart(px.pie(cdf, names='Level', values='Count', color='Level', color='Level', color_discrete_map=COLORS, hole=0.3), use_container_width=True)
                 st.subheader("🎯 Student Support Levels")
                 st.plotly_chart(px.bar(rdf.dropna(subset=['Total %']), x='Student Name', y='Total %', color='Support Level', range_y=[0, 100]), use_container_width=True)
                 support_count = rdf['Support Level'].value_counts().reset_index(); support_count.columns = ['Support Level', 'Students']
@@ -450,7 +432,7 @@ elif page == "📚 Grade Analysis":
 elif page == "📈 MAP Analysis":
     st.title("📈 MAP Analysis")
     st.info("### What is a RIT Score?\nThe RIT score is the scale used by MAP Growth to measure student achievement and instructional level.")
-    st.markdown("### What this analysis does\n- Calculates RIT growth.\n- Identifies Growth, Decay, or Same performance.\n- Shows student percentile.\n- Calculates grade average RIT.\n- Identifies students below the selected percentile.\n- Identifies students requiring intervention or enrichment.\n- Identifies students requiring intervention or enrichment.")
+    st.markdown("### What this analysis does\n- Calculates RIT growth.\n- Identifies Growth, Decay, or Same performance.\n- Shows student percentile.\n- Calculates grade average RIT.\n- Identifies students below the selected percentile.\n- Identifies students requiring intervention or enrichment.")
     st.download_button("📥 Download MAP Excel Template", map_template(), "MAP_Analysis_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     st.markdown("---")
     map_file = st.file_uploader("📄 Upload MAP Data Excel", type=["xlsx", "xls"], key="map")
@@ -466,7 +448,7 @@ elif page == "📈 MAP Analysis":
             map_df["Percentile"] = pd.to_numeric(map_df["Percentile"], errors="coerce")
             map_df["RIT Growth"] = map_df["Current RIT"] - map_df["Previous RIT"]
             map_df["Growth Status"] = map_df["RIT Growth"].apply(lambda x: "Growth" if x > 0 else "Decay" if x < 0 else "Same")
-            map_df["Support Level"] = map_df["Percentile"].apply(lambda x: "Intervention" if x < 25 else "Monitor" if x < 50 else "On Track" if x < 75 else "Enrichment")
+            map_df["Support Level"] = map_df["Percentile"].apply(lambda x: "Intervention" if x < 25 else "Monitor" if x < 50 else "On Track" if x > 75 else "Enrichment")
             st.subheader("📋 MAP Data Preview")
             st.dataframe(map_df, use_container_width=True)
             st.markdown("---")
@@ -507,7 +489,6 @@ elif page == "📈 MAP Analysis":
 elif page == "🎯 Achievement & Gaps":
     st.header("🎯 Comparison between Internal and External Assessments")
     st.download_button("📥 Download Excel Template", total_template(), "Achievement_Gaps_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    st.download_button? No, st.info
     st.info("Upload two files.\n\nExcel Format:\nRow 1: Assessment Information\nRow 2: Headers (Student Name, Total)\nRow 3: 'Total' + Maximum Mark\nRow 4+: Student Marks")
     f1 = st.file_uploader("📄 Internal Assessment", type=["xlsx", "xls"], key="intf")
     f2 = st.file_uploader("📄 External Assessment", type=["xlsx", "xls"], key="extf")
@@ -518,7 +499,7 @@ elif page == "🎯 Achievement & Gaps":
             st.error("❌ One of the files is missing the 'Total' row/max."); st.stop()
         st.subheader("📋 Assessment Information")
         st.markdown(f"**Internal:** 👩‍🏫 {m1.get('Teacher Name', 'N/A')} | 🏫 {m1.get('Class', 'N/A')} | 📅 {m1.get('Date', 'N/A')} | 📝 {m1.get('Assessment name', 'N/A')} | 📚 {m1.get('Subject', 'N/A')}")
-        st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A')} | 🏫 {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')} | 📚 {m2.get('Subject', 'N/A')}")
+        st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A')} | 🏫 {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')} | 📱 {m2.get('Subject', 'N/A')}")
         st.markdown(f"### 📊 Comparing: **{m1.get('Assessment name', 'Internal')} / {m2.get('Assessment name', 'External')}** | 📚 Subject: **{m1.get('Subject', 'N/A')}**")
         merged = pd.merge(df1[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct1'}), df2[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct2'}), on='Student Name', how='outer').fillna(0)
         merged['Difference'] = (merged['Pct2'] - merged['Pct1']).round(1)
@@ -543,7 +524,6 @@ elif page == "🎯 Achievement & Gaps":
             pf.update_traces(textinfo='percent+label'); st.plotly_chart(pf, use_container_width=True)
         st.subheader("📈 Student Gap (Difference)")
         st.plotly_chart(px.bar(merged, x='Student Name', y='Difference', color='Status'), use_container_width=True)
-        support_count = merged['Support Level'].value_counts? No
         support_count = merged['Support Level'].value_counts().reset_index(); support_count.columns = ['Support Level', 'Students']
         st.subheader("👥 Support Groups")
         st.dataframe(support_count, use_container_width=True)
