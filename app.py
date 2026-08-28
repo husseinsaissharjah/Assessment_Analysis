@@ -6,6 +6,32 @@ import os
 
 st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
 
+# ---------- Modern Sidebar Navigation ----------
+if "page" not in st.session_state:
+    st.session_state.page = "🏠 Home"
+
+st.sidebar.markdown("### 🧭 Navigation")
+nav_pages = [
+    "🏠 Home",
+    "📊 Overview",
+    "👨‍🎓 Student Analysis",
+    "📚 Grade Analysis",
+    "📈 MAP Analysis",
+    "🎯 Achievement & Gaps",
+    "📑 Reports"
+]
+for p in nav_pages:
+    if st.sidebar.button(
+        p,
+        key=f"nav_{p}",
+        type="primary" if st.session_state.page == p else "secondary",
+        use_container_width=True
+    ):
+        st.session_state.page = p
+
+page = st.session_state.page
+
+# =========================================================
 COLORS = {'Absent':'#808080','Fail':'#d62728','Acceptable':'#ff7f0e','Good':'#2ca02c','Very Good':'#1f77b4','Outstanding':'#9467bd'}
 ORDER = ['Absent','Fail','Acceptable','Good','Very Good','Outstanding']
 
@@ -56,7 +82,7 @@ def total_template():
     return buffer.getvalue()
 
 def map_template():
-    data = {"Student Name":["Student 1","Student 2","Student 3","Student 4"],"Grade":[7,7,7,7],"Subject":["Mathematics","Mathematics","Mathematics","Mathematics"],"Previous RIT":[205,210,198,215],"Current RIT":[210,214,200,218],"Percentile":[55,70,40,30]}
+    data = {"Student Name":["Student 1","Student 2","Student 3","Student 4"],"Grade":[7,7,7,7],"Subject":["Mathematics","Mathematics","Mathematics","Mathematics"],"Previous RIT":[205,210,198,215],"Current RIT":[210,214,200,218],"Percentile":[55,70,40,85]}
     df = pd.DataFrame(data)
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
@@ -135,8 +161,7 @@ def read_total_file(f):
     data['Pct'] = (data[total_col] / max_total * 100).round(1) if max_total else 0.0
     return meta, data
 
-page = st.sidebar.radio("Navigation", ["🏠 Home","📊 Overview","👨‍🎓 Student Analysis","📚 Grade Analysis","📈 MAP Analysis","🎯 Achievement & Gaps","📑 Reports"])
-
+# =========================================================
 if page == "🏠 Home":
     if os.path.exists("logo.png"): st.image("logo.png", width=120)
     st.title("SAIS Analyzer")
@@ -271,9 +296,12 @@ elif page == "👨‍🎓 Student Analysis":
                 rdf['Support Level'] = rdf['Total %'].apply(support_level)
                 st.header("Step 2: Analysis Report")
                 c1, c2, c3, c4, c5, c6 = st.columns(6)
-                cnt = rdf['Level'].value_counts().to_dict()
-                c1.metric("Absent", cnt.get('Absent', 0)); c2.metric("Fail", cnt.get('Fail', 0)); c3.metric("Acceptable", 0) if False else c3.metric("Acceptable", cnt.get('Acceptable', 0))
-                c4.metric("Good", cnt.get('Good', 0)); c5.metric("Very Good", cnt.get('Very Good', 0)); c6.metric("Outstanding", cnt.get('Outstanding', 0))
+                c1.metric("Absent", cnt := rdf['Level'].value_counts().to_dict()).get('Absent', 0)
+                c2.metric("Fail", cnt.get('Fail', 0))
+                c3.metric("Acceptable", cnt.get('Acceptable', 0))
+                c4.metric("Good", cnt.get('Good', 0))
+                c5.metric("Very Good", cnt.get('Very Good', 0))
+                c6.metric("Outstanding", cnt.get('Outstanding', 0))
                 ts = len(rdf)
                 ge60 = (rdf['Total %'] >= 60).sum() / ts * 100 if ts else 0
                 gt60 = (rdf['Total %'] > 60).sum() / ts * 100 if ts else 0
@@ -312,7 +340,6 @@ elif page == "📚 Grade Analysis":
             meta, df = read_objectives_file(f)
             if meta is None:
                 st.error(f"❌ File {i + 1} missing 'Points for Objectives' row."); st.stop()
-            # Capture objective descriptions from this file
             f.seek(0)
             raw_g = pd.read_excel(f, header=1)
             if str(raw_g.iloc[0, 0]).strip().lower() != "points for objectives":
@@ -328,9 +355,7 @@ elif page == "📚 Grade Analysis":
                     else:
                         d = str(c)
                     obj_desc_g[c] = d
-            metas.append(meta)
-            names.append(meta.get('Assessment name', 'N/A'))
-            descriptions.append(obj_desc_g)
+            metas.append(meta); names.append(meta.get('Assessment name', 'N/A')); descriptions.append(obj_desc_g)
             col = f'Pct{i + 1}'
             keep = df[['Student Name', 'Pct']].rename(columns={'Pct': col})
             merged = keep if merged is None else pd.merge(merged, keep, on='Student Name', how='outer')
@@ -338,7 +363,7 @@ elif page == "📚 Grade Analysis":
         st.subheader("📋 Assessment Information")
         for i, m in enumerate(metas):
             st.markdown(f"**File {i + 1} ({m.get('Assessment name', 'N/A')}):** 👩‍🏫 {m.get('Teacher Name', 'N/A')} | 🏫 {m.get('Class', 'N/A')} | 📅 {m.get('Date', 'N/A')} | 📚 {m.get('Subject', 'N/A')}")
-            st.markdown(f"**📚 Objectives:**")
+            st.markdown("**📚 Objectives:**")
             for c, d in descriptions[i].items():
                 st.markdown(f"- **{c}** – {d}")
         st.markdown(f"### 📊 Comparing: **{' / '.join(names)}** | 📚 Subject: **{metas[0].get('Subject', 'N/A')}**")
@@ -467,9 +492,9 @@ elif page == "🎯 Achievement & Gaps":
         with v2:
             st.markdown("**Pie Chart**")
             pf = px.pie(cd, names='Status', values='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}, hole=0.3)
-            pf.update_traces(textinfo='percent+label'); st.plotly_chart(pf, use_container_width=True)
+            pf.update_traces(textinfo='percent+label'); pf.update_traces(textinfo='percent+label')
+            st.plotly_chart(pf, use_container_width=True)
         st.subheader("📈 Student Gap (Difference)")
-        soc = merged['Status']
         st.plotly_chart(px.bar(merged, x='Student Name', y='Difference', color='Status'), use_container_width=True)
         support_count = merged['Support Level'].value_counts().reset_index(); support_count.columns = ['Support Level', 'Students']
         st.subheader("👥 Support Groups")
