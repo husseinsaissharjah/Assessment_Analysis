@@ -7,62 +7,49 @@ import os
 st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
 
 # =========================================================
-# CUSTOM CSS – NO orange, NO borders, NO double-blue
+# LINK-BASED SIDEBAR MENU (NO BUTTONS, NO ORANGE)
 # =========================================================
 
 st.markdown("""
 <style>
-.stSidebar .stButton > button {
-    border: none !important;
-    border-radius: 8px !important;
-    box-shadow: none !important;
-    outline: none !important;
+.menu { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+.menu a {
+    text-decoration:none;
+    padding:10px 12px;
+    border-radius:8px;
+    background:#f0f2f6;
+    color:#333;
+    text-align:center;
+    font-weight:600;
 }
-.stSidebar .stButton > button:focus,
-.stSidebar .stButton > button:active {
-    background-color: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    outline: none !important;
-}
-.stSidebar .stButton > button:hover {
-    background-color: #1f77b4 !important;
-    color: white !important;
-    border: none !important;
-}
+.menu a:hover { background:#1f77b4 !important; color:#fff !important; }
+.menu a.active { background:#1f77b4 !important; color:#fff !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# =========================================================
-# MODERN SIDEBAR NAVIGATION (active = div, others = buttons)
-# =========================================================
+nav_items = [
+    ("home", "🏠 Home"),
+    ("overview", "📊 Overview"),
+    ("student", "👨‍🎓 Student Analysis"),
+    ("grade", "📚 Grade Analysis"),
+    ("map", "📈 MAP Analysis"),
+    ("gaps", "🎯 Achievement & Gaps"),
+    ("reports", "📑 Reports")
+]
 
-if "page" not in st.session_state:
-    st.session_state.page = "🏠 Home"
+params = st.query_params
+page_key = params.get("page", "home")
+if isinstance(page_key, list):
+    page_key = page_key[0]
+
+menu_html = "<div class='menu'>"
+for key, label in nav_items:
+    cls = "active" if key == page_key else ""
+    menu_html += f"<a href='?page={key}' class='{cls}'>{label}</a>"
+menu_html += "</div>"
 
 st.sidebar.markdown("### 🧭 Navigation")
-nav_pages = [
-    "🏠 Home",
-    "📊 Overview",
-    "👨‍🎓 Student Analysis",
-    "📚 Grade Analysis",
-    "📈 MAP Analysis",
-    "🎯 Achievement & Gaps",
-    "📑 Reports"
-]
-for p in nav_pages:
-    if st.session_state.page == p:
-        st.sidebar.markdown(
-            f"<div style='background-color:#1f77b4;color:white;padding:0.5rem;"
-            f"border-radius:8px;text-align:center;font-weight:600;margin-bottom:0.25rem;'"
-            f">{p}</div>",
-            unsafe_allow_html=True
-        )
-    else:
-        if st.sidebar.button(p, key=f"nav_{p}", use_container_width=True):
-            st.session_state.page = p
-
-page = st.session_state.page
+st.sidebar.markdown(menu_html, unsafe_allow_html=True)
 
 # =========================================================
 # HELPERS & DATA
@@ -79,10 +66,8 @@ def color_cell(v):
 
 def support_level(pct):
     if pct is None: return 'N/A'
-    try:
-        p = float(pct)
-    except:
-        return 'N/A'
+    try: p = float(pct)
+    except: return 'N/A'
     if pd.isna(p): return 'N/A'
     return "Intervention" if p < 25 else "Monitor" if p < 50 else "On Track" if p < 75 else "Enrichment"
 
@@ -175,8 +160,9 @@ def read_total_file(f):
     for c in raw.iloc[0, :]:
         val = str(c).strip()
         if ':' in val:
-            k, v = val.split(':', 1)
-            meta[k.strip()] = v.strip()
+            k, v = ()
+            k, v = (lambda s: (s.split(':',1)[0].strip(), s.split(':',1)[1].strip()))(val)
+            meta[k] = v
     headers = [str(x).strip() for x in raw.iloc[1, :].tolist()]
     total_idx = None
     for i in range(2, len(raw)):
@@ -200,10 +186,10 @@ def read_total_file(f):
     return meta, data
 
 # =========================================================
-# PAGES (unchanged from your version)
+# PAGES
 # =========================================================
 
-if page == "🏠 Home":
+if page_key == "home":
     if os.path.exists("logo.png"): st.image("logo.png", width=120)
     st.title("SAIS Analyzer")
     st.markdown("### Student Assessment & Achievement Dashboard")
@@ -216,7 +202,7 @@ if page == "🏠 Home":
     with c3: st.markdown("### ③ View Insights\nSee charts, gaps, and download reports.")
     st.info("Use the sidebar on the left to navigate to your analysis.")
 
-elif page == "📊 Overview":
+elif page_key == "overview":
     st.title("📊 SAIS Analyzer Overview")
     st.markdown("The SAIS Analyzer is designed to help teachers, coordinators, and school leaders analyze student achievement quickly and consistently.")
     st.markdown("---")
@@ -238,7 +224,7 @@ elif page == "📊 Overview":
     st.markdown("The MAP Analysis service helps analyze student performance using MAP Growth RIT scores.")
     st.info("**What is a RIT Score?**\n\nA RIT score is the scale used in MAP Growth to measure a student's academic achievement and instructional level.")
 
-elif page == "👨‍🎓 Student Analysis":
+elif page_key == "student":
     st.header("👨‍🎓 Student Analysis")
     st.markdown("Analyze a single assessment based on learning objectives and student marks.")
     st.download_button("📥 Download Excel Template", objectives_template(), "Student_Analysis_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
@@ -368,7 +354,7 @@ elif page == "👨‍🎓 Student Analysis":
                 eb = io.BytesIO(); rdf.to_excel(eb, index=False)
                 st.download_button("📊 Download Excel", eb.getvalue(), "Report.xlsx")
 
-elif page == "📚 Grade Analysis":
+elif page_key == "grade":
     st.header("📚 Compare Multiple Assessments")
     st.download_button("📥 Download Excel Template", objectives_template(), "Grade_Analysis_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     st.info("Choose the number of assessments. Upload files using the same Excel format as Student Analysis. Each assessment score will automatically be converted to a percentage before comparison.")
@@ -408,7 +394,7 @@ elif page == "📚 Grade Analysis":
             st.markdown("**📚 Objectives:**")
             for c, d in descriptions[i].items():
                 st.markdown(f"- **{c}** – {d}")
-        st.markdown(f"### 📊 Comparing: **{' / '.join(names)}** | 📚 Subject: **{metas[0].get('Subject', 'N/A')}**" if False else st.markdown(f"### 📊 Comparing: **{' / '.join(names)}** | 📚 Subject: **{metas[0].get('Subject', 'N/A')}**"))
+        st.markdown(f"### 📊 Comparing: **{' / '.join(names)}** | 📚 Subject: **{metas[0].get('Subject', 'N/A')}**")
         merged[pct_cols] = merged[pct_cols].fillna(0)
         merged['Difference'] = (merged[pct_cols[-1]] - merged[pct_cols[0]]).round(1)
         merged['Status'] = merged['Difference'].apply(lambda d: 'Growth' if d > 0.5 else 'Decay' if d < -0.5 else 'Same')
@@ -442,7 +428,7 @@ elif page == "📚 Grade Analysis":
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Comparison.xlsx")
 
-elif page == "📈 MAP Analysis":
+elif page_key == "map":
     st.title("📈 MAP Analysis")
     st.info("### What is a RIT Score?\nThe RIT score is the scale used by MAP Growth to measure student achievement and instructional level.")
     st.markdown("### What this analysis does\n- Calculates RIT growth.\n- Identifies Growth, Decay, or Same performance.\n- Shows student percentile.\n- Calculates grade average RIT.\n- Identifies students below the selected percentile.\n- Identifies students requiring intervention or enrichment.")
@@ -499,7 +485,7 @@ elif page == "📈 MAP Analysis":
         except Exception as e:
             st.error(f"❌ Error reading MAP file: {e}")
 
-elif page == "🎯 Achievement & Gaps":
+elif page_key == "gaps":
     st.header("🎯 Comparison between Internal and External Assessments")
     st.download_button("📥 Download Excel Template", total_template(), "Achievement_Gaps_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     st.info("Upload two files.\n\nExcel Format:\nRow 1: Assessment Information\nRow 2: Headers (Student Name, Total)\nRow 3: 'Total' + Maximum Mark\nRow 4+: Student Marks")
@@ -543,6 +529,6 @@ elif page == "🎯 Achievement & Gaps":
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Internal_External_Comparison.xlsx")
 
-elif page == "📑 Reports":
+elif page_key == "reports":
     st.title("📑 Reports")
     st.info("Reports generated from each analysis can be downloaded directly from the relevant analysis page.\n\nFuture versions can include:\n• School-level reports\n• Grade-level reports\n• Class comparison\n• MAP vs Internal Assessment comparison\n• Automatic PDF reports")
