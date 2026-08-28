@@ -12,29 +12,44 @@ st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
 
 st.markdown("""
 <style>
-.stSidebar .stButton > button {
+/* Keep all sidebar navigation buttons blue — including the button that was just clicked. */
+.stSidebar .stButton > button,
+.stSidebar .stButton > button[data-testid="stBaseButton-secondary"],
+.stSidebar .stButton > button[data-testid="stBaseButton-primary"],
+.stSidebar .stButton > button[kind="secondary"],
+.stSidebar .stButton > button[kind="primary"] {
     border: none !important;
     border-radius: 8px !important;
     box-shadow: none !important;
     outline: none !important;
 }
+
+/* Remove Streamlit's default orange focus/active/selected styling. */
 .stSidebar .stButton > button:hover,
 .stSidebar .stButton > button:focus,
 .stSidebar .stButton > button:focus-visible,
-.stSidebar .stButton > button:active {
+.stSidebar .stButton > button:active,
+.stSidebar .stButton > button[data-testid="stBaseButton-primary"],
+.stSidebar .stButton > button[data-testid="stBaseButton-primary"]:hover,
+.stSidebar .stButton > button[data-testid="stBaseButton-primary"]:focus,
+.stSidebar .stButton > button[data-testid="stBaseButton-primary"]:focus-visible,
+.stSidebar .stButton > button[data-testid="stBaseButton-primary"]:active,
+.stSidebar .stButton > button[kind="primary"],
+.stSidebar .stButton > button[kind="primary"]:hover,
+.stSidebar .stButton > button[kind="primary"]:focus,
+.stSidebar .stButton > button[kind="primary"]:focus-visible,
+.stSidebar .stButton > button[kind="primary"]:active {
     background-color: #1f77b4 !important;
     color: white !important;
     border: none !important;
+    border-color: transparent !important;
     box-shadow: none !important;
     outline: none !important;
 }
-.stSidebar .stButton > button[data-baseweb-button="true"][kind="primary"] {
-    background-color: #1f77b4 !important;
-    color: white !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-.stSidebar .stButton > button[data-baseweb-button="true"][kind="primary"]:hover {
+
+/* Slightly darker blue only while hovering over the currently selected item. */
+.stSidebar .stButton > button[data-testid="stBaseButton-primary"]:hover,
+.stSidebar .stButton > button[kind="primary"]:hover {
     background-color: #155e8c !important;
 }
 </style>
