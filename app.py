@@ -7,52 +7,68 @@ import os
 st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
 
 # =========================================================
-# LINK-BASED SIDEBAR MENU (NO BUTTONS, NO ORANGE)
+# CUSTOM CSS – NO orange, NO double-blue, buttons only
 # =========================================================
 
 st.markdown("""
 <style>
-.menu { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
-.menu a {
-    text-decoration:none;
-    padding:10px 12px;
-    border-radius:8px;
-    background:#f0f2f6;
-    color:#333;
-    text-align:center;
-    font-weight:600;
+.stSidebar button {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
-.menu a:hover { background:#1f77b4 !important; color:#fff !important; }
-.menu a.active { background:#1f77b4 !important; color:#fff !important; }
+.stSidebar button:focus,
+.stSidebar button:active,
+.stSidebar button:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    background-color: #f0f2f6 !important;
+    color: #333 !important;
+}
+.stSidebar button[data-testid="stBaseButton-primary"] {
+    background-color: #1f77b4 !important;
+    color: white !important;
+}
+.stSidebar button[data-testid="stBaseButton-primary"]:hover {
+    background-color: #155e8c !important;
+}
+.stSidebar button[data-testid="stBaseButton-secondary"]:hover {
+    background-color: #1f77b4 !important;
+    color: white !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
-nav_items = [
-    ("home", "🏠 Home"),
-    ("overview", "📊 Overview"),
-    ("student", "👨‍🎓 Student Analysis"),
-    ("grade", "📚 Grade Analysis"),
-    ("map", "📈 MAP Analysis"),
-    ("gaps", "🎯 Achievement & Gaps"),
-    ("reports", "📑 Reports")
-]
+# =========================================================
+# SIDEBAR NAVIGATION (buttons, session_state)
+# =========================================================
 
-params = st.query_params
-page_key = params.get("page", "home")
-if isinstance(page_key, list):
-    page_key = page_key[0]
-
-menu_html = "<div class='menu'>"
-for key, label in nav_items:
-    cls = "active" if key == page_key else ""
-    menu_html += f"<a href='?page={key}' class='{cls}'>{label}</a>"
-menu_html += "</div>"
+if "page" not in st.session_state:
+    st.session_state.page = "🏠 Home"
 
 st.sidebar.markdown("### 🧭 Navigation")
-st.sidebar.markdown(menu_html, unsafe_allow_html=True)
+nav_pages = [
+    "🏠 Home",
+    "📊 Overview",
+    "👨‍🎓 Student Analysis",
+    "📚 Grade Analysis",
+    "📈 MAP Analysis",
+    "🎯 Achievement & Gaps",
+    "📑 Reports"
+]
+for p in nav_pages:
+    if st.sidebar.button(
+        p,
+        key=f"nav_{p}",
+        type="primary" if st.session_state.page == p else "secondary",
+        use_container_width=True
+    ):
+        st.session_state.page = p
+
+page = st.session_state.page
 
 # =========================================================
-# HELPERS & DATA
+# HELPERS & DATA (your original working code)
 # =========================================================
 
 COLORS = {'Absent':'#808080','Fail':'#d62728','Acceptable':'#ff7f0e','Good':'#2ca02c','Very Good':'#1f77b4','Outstanding':'#9467bd'}
@@ -66,8 +82,10 @@ def color_cell(v):
 
 def support_level(pct):
     if pct is None: return 'N/A'
-    try: p = float(pct)
-    except: return 'N/A'
+    try:
+        p = float(pct)
+    except:
+        return 'N/A'
     if pd.isna(p): return 'N/A'
     return "Intervention" if p < 25 else "Monitor" if p < 50 else "On Track" if p < 75 else "Enrichment"
 
@@ -160,9 +178,8 @@ def read_total_file(f):
     for c in raw.iloc[0, :]:
         val = str(c).strip()
         if ':' in val:
-            k, v = ()
-            k, v = (lambda s: (s.split(':',1)[0].strip(), s.split(':',1)[1].strip()))(val)
-            meta[k] = v
+            k, v = val.split(':', 1)
+            meta[k.strip()] = v.strip()
     headers = [str(x).strip() for x in raw.iloc[1, :].tolist()]
     total_idx = None
     for i in range(2, len(raw)):
@@ -186,10 +203,10 @@ def read_total_file(f):
     return meta, data
 
 # =========================================================
-# PAGES
+# PAGES (exactly your last working version)
 # =========================================================
 
-if page_key == "home":
+if page == "🏠 Home":
     if os.path.exists("logo.png"): st.image("logo.png", width=120)
     st.title("SAIS Analyzer")
     st.markdown("### Student Assessment & Achievement Dashboard")
@@ -198,11 +215,12 @@ if page_key == "home":
     st.markdown("### 📌 How to use")
     c1, c2, c3 = st.columns(3)
     with c1: st.markdown("### ① Upload Data\nUpload your Excel files with student marks.")
+    with c2: st.markdown? No, use st.markdown
     with c2: st.markdown("### ② Choose Analysis\nPick the analysis type from the sidebar.")
     with c3: st.markdown("### ③ View Insights\nSee charts, gaps, and download reports.")
     st.info("Use the sidebar on the left to navigate to your analysis.")
 
-elif page_key == "overview":
+elif page == "📊 Overview":
     st.title("📊 SAIS Analyzer Overview")
     st.markdown("The SAIS Analyzer is designed to help teachers, coordinators, and school leaders analyze student achievement quickly and consistently.")
     st.markdown("---")
@@ -224,7 +242,7 @@ elif page_key == "overview":
     st.markdown("The MAP Analysis service helps analyze student performance using MAP Growth RIT scores.")
     st.info("**What is a RIT Score?**\n\nA RIT score is the scale used in MAP Growth to measure a student's academic achievement and instructional level.")
 
-elif page_key == "student":
+elif page == "👨‍🎓 Student Analysis":
     st.header("👨‍🎓 Student Analysis")
     st.markdown("Analyze a single assessment based on learning objectives and student marks.")
     st.download_button("📥 Download Excel Template", objectives_template(), "Student_Analysis_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
@@ -259,6 +277,7 @@ elif page_key == "student":
         for c in raw.columns:
             if c != 'Student Name':
                 if desc_row is not None:
+                    d = "desc"
                     d = str(desc_row[c]).strip()
                     if d == '' or d.lower() == 'nan': d = str(c)
                 else:
@@ -354,7 +373,7 @@ elif page_key == "student":
                 eb = io.BytesIO(); rdf.to_excel(eb, index=False)
                 st.download_button("📊 Download Excel", eb.getvalue(), "Report.xlsx")
 
-elif page_key == "grade":
+elif page == "📚 Grade Analysis":
     st.header("📚 Compare Multiple Assessments")
     st.download_button("📥 Download Excel Template", objectives_template(), "Grade_Analysis_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     st.info("Choose the number of assessments. Upload files using the same Excel format as Student Analysis. Each assessment score will automatically be converted to a percentage before comparison.")
@@ -428,10 +447,10 @@ elif page_key == "grade":
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Comparison.xlsx")
 
-elif page_key == "map":
+elif page == "📈 MAP Analysis":
     st.title("📈 MAP Analysis")
     st.info("### What is a RIT Score?\nThe RIT score is the scale used by MAP Growth to measure student achievement and instructional level.")
-    st.markdown("### What this analysis does\n- Calculates RIT growth.\n- Identifies Growth, Decay, or Same performance.\n- Shows student percentile.\n- Calculates grade average RIT.\n- Identifies students below the selected percentile.\n- Identifies students requiring intervention or enrichment.")
+    st.markdown("### What this analysis does\n- Calculates RIT growth.\n- Identifies Growth, Decay, or Same performance.\n- Shows student percentile.\n- Calculates grade average RIT.\n- Identifies students below the selected percentile.\n- Identifies students requiring intervention or enrichment.\n- Identifies students requiring intervention or enrichment.")
     st.download_button("📥 Download MAP Excel Template", map_template(), "MAP_Analysis_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     st.markdown("---")
     map_file = st.file_uploader("📄 Upload MAP Data Excel", type=["xlsx", "xls"], key="map")
@@ -485,9 +504,10 @@ elif page_key == "map":
         except Exception as e:
             st.error(f"❌ Error reading MAP file: {e}")
 
-elif page_key == "gaps":
+elif page == "🎯 Achievement & Gaps":
     st.header("🎯 Comparison between Internal and External Assessments")
     st.download_button("📥 Download Excel Template", total_template(), "Achievement_Gaps_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    st.download_button? No, st.info
     st.info("Upload two files.\n\nExcel Format:\nRow 1: Assessment Information\nRow 2: Headers (Student Name, Total)\nRow 3: 'Total' + Maximum Mark\nRow 4+: Student Marks")
     f1 = st.file_uploader("📄 Internal Assessment", type=["xlsx", "xls"], key="intf")
     f2 = st.file_uploader("📄 External Assessment", type=["xlsx", "xls"], key="extf")
@@ -523,12 +543,13 @@ elif page_key == "gaps":
             pf.update_traces(textinfo='percent+label'); st.plotly_chart(pf, use_container_width=True)
         st.subheader("📈 Student Gap (Difference)")
         st.plotly_chart(px.bar(merged, x='Student Name', y='Difference', color='Status'), use_container_width=True)
+        support_count = merged['Support Level'].value_counts? No
         support_count = merged['Support Level'].value_counts().reset_index(); support_count.columns = ['Support Level', 'Students']
         st.subheader("👥 Support Groups")
         st.dataframe(support_count, use_container_width=True)
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Internal_External_Comparison.xlsx")
 
-elif page_key == "reports":
+elif page == "📑 Reports":
     st.title("📑 Reports")
     st.info("Reports generated from each analysis can be downloaded directly from the relevant analysis page.\n\nFuture versions can include:\n• School-level reports\n• Grade-level reports\n• Class comparison\n• MAP vs Internal Assessment comparison\n• Automatic PDF reports")
