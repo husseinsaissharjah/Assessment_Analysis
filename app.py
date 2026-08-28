@@ -7,29 +7,37 @@ import os
 st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
 
 # =========================================================
-# CUSTOM CSS – Flat blue sidebar menu, no borders
+# CUSTOM CSS – Flat blue menu, NO orange, NO borders
 # =========================================================
 
 st.markdown("""
-    <style>
-    .stSidebar .stButton > button {
-        border: none !important;
-        border-radius: 8px !important;
-        transition: background-color 0.15s ease;
-    }
-    .stSidebar .stButton > button:hover {
-        background-color: #1f77b4 !important;
-        color: white !important;
-    }
-    .stSidebar .stButton > button[data-baseweb-button="true"][kind="primary"] {
-        background-color: #1f77b4 !important;
-        color: white !important;
-        border: none !important;
-    }
-    .stSidebar .stButton > button[data-baseweb-button="true"][kind="primary"]:hover {
-        background-color: #155e8c !important;
-    }
-    </style>
+<style>
+.stSidebar .stButton > button {
+    border: none !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+.stSidebar .stButton > button:hover,
+.stSidebar .stButton > button:focus,
+.stSidebar .stButton > button:focus-visible,
+.stSidebar .stButton > button:active {
+    background-color: #1f77b4 !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+.stSidebar .stButton > button[data-baseweb-button="true"][kind="primary"] {
+    background-color: #1f77b4 !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+.stSidebar .stButton > button[data-baseweb-button="true"][kind="primary"]:hover {
+    background-color: #155e8c !important;
+}
+</style>
 """, unsafe_allow_html=True)
 
 # =========================================================
@@ -75,8 +83,10 @@ def color_cell(v):
 
 def support_level(pct):
     if pct is None: return 'N/A'
-    try: p = float(pct)
-    except: return 'N/A'
+    try:
+        p = float(pct)
+    except:
+        return 'N/A'
     if pd.isna(p): return 'N/A'
     return "Intervention" if p < 25 else "Monitor" if p < 50 else "On Track" if p < 75 else "Enrichment"
 
@@ -335,7 +345,7 @@ elif page == "👨‍🎓 Student Analysis":
                 c1.metric("Absent", cnt.get('Absent', 0))
                 c2.metric("Fail", cnt.get('Fail', 0))
                 c3.metric("Acceptable", cnt.get('Acceptable', 0))
-                c4.metric("Good", cnt and True) if False else c4.metric("Good", cnt.get('Good', 0))
+                c4.metric("Good", cnt.get('Good', 0))
                 c5.metric("Very Good", cnt.get('Very Good', 0))
                 c6.metric("Outstanding", cnt.get('Outstanding', 0))
                 ts = len(rdf)
@@ -357,7 +367,8 @@ elif page == "👨‍🎓 Student Analysis":
                 st.plotly_chart(px.bar(rdf.dropna(subset=['Total %']), x='Student Name', y='Total %', color='Support Level', range_y=[0, 100]), use_container_width=True)
                 support_count = rdf['Support Level'].value_counts().reset_index(); support_count.columns = ['Support Level', 'Students']
                 st.subheader("👥 Support Groups")
-                st.dataframe(support_count, use_container_width=True)
+                support_count_df = support_count
+                st.dataframe(support_count_df, use_container_width=True)
                 st.dataframe(rdf, use_container_width=True)
                 eb = io.BytesIO(); rdf.to_excel(eb, index=False)
                 st.download_button("📊 Download Excel", eb.getvalue(), "Report.xlsx")
@@ -414,6 +425,7 @@ elif page == "📚 Grade Analysis":
         st.subheader("📢 Summary")
         m1, m2, m3 = st.columns(3)
         m1.metric("🟩 Growth", gc); m2.metric("🟥 Decay", dc); m3.metric("🟨 Same", sc)
+        cd = pd.DataFrame()
         cd = pd.DataFrame({'Status': ['Growth', 'Decay', 'Same'], 'Count': [gc, dc, sc]})
         cd['Status'] = pd.Categorical(cd['Status'], categories=['Decay', 'Same', 'Growth'], ordered=True)
         v1, v2 = st.columns(2)
