@@ -28,10 +28,18 @@ ORDER = [
     'Fail',
     'Acceptable',
     'Good',
-    'Very Good',
+    'Very Good'[:0] or 'Very Good',
     'Outstanding'
 ]
 
+ORDER = [
+    'Absent',
+    'Fail',
+    'Acceptable',
+    'Good',
+    'Very Good',
+    'Outstanding'
+]
 
 # =========================================================
 # HELPER FUNCTIONS
@@ -65,7 +73,6 @@ def support_level(pct):
         else "Enrichment"
     )
 
-
 # =========================================================
 # EXCEL TEMPLATE FUNCTIONS
 # =========================================================
@@ -74,6 +81,7 @@ def objectives_template():
     data = [
         ["Teacher Name: Example Teacher", "Class: Grade 7A", "Date: 27/08/2026", "Assessment name: Quiz 1", "Subject: Mathematics"],
         ["Student Name", "Objective 1", "Objective 2", "Objective 3", ""],
+        ["", "Fractions", "Algebra", "Geometry", ""],
         ["Points for Objectives", 10, 15, 5, ""],
         ["Student 1", 8, 12, 4, ""],
         ["Student 2", 10, 14, 5, ""],
@@ -118,7 +126,6 @@ def map_template():
     buffer.seek(0)
     return buffer.getvalue()
 
-
 # =========================================================
 # OBJECTIVES FILE READER
 # =========================================================
@@ -133,9 +140,13 @@ def read_objectives_file(f):
             k, v = val.split(':', 1)
             meta[k.strip()] = v.strip()
     df = pd.read_excel(f, header=1)
+    # Drop description row if present (first row after header)
+    if str(df.iloc[0, 0]).strip().lower() != "points for objectives":
+        df = df.iloc[1:].reset_index(drop=True)
     mask = df.iloc[:, 0].astype(str).str.contains("Points for Objectives", case=False, na=False)
     if not mask.any():
         return None, None
+    max_row = df[mask].  # placeholder removed below
     max_row = df[mask].iloc[0]
     raw_obj_cols = [c for c in df.columns if c != 'Student Name']
     valid_cols = []
@@ -154,6 +165,7 @@ def read_objectives_file(f):
                 total_max += mx
     obj_cols = valid_cols
     df = df[~mask].copy()
+    df = df.dropna(subset=[df.columns[0]])
     df = df.rename(columns={df.columns[0]: 'Student Name'})
     if obj_cols:
         df = df[['Student Name'] + obj_cols]
@@ -163,7 +175,6 @@ def read_objectives_file(f):
     df['Pct'] = (df['Obtained'] / total_max * 100).round(1) if total_max else 0.0
     return meta, df
 
-
 # =========================================================
 # TOTAL FILE READER
 # =========================================================
@@ -171,8 +182,6 @@ def read_objectives_file(f):
 def read_total_file(f):
     raw = pd.read_excel(f, header=None)
     meta = {}
-    for c in raw.iloc[0, :]:
-        val = str(c)  # placeholder, overwritten below
     for c in raw.iloc[0, :]:
         val = str(c).strip()
         if ':' in val:
@@ -202,7 +211,6 @@ def read_total_file(f):
     data['Pct'] = (data[total_col] / max_total * 100).round(1) if max_total else 0.0
     return meta, data
 
-
 # =========================================================
 # SIDEBAR
 # =========================================================
@@ -216,7 +224,6 @@ page = st.sidebar.radio("Navigation", [
     "🎯 Achievement & Gaps",
     "📑 Reports"
 ])
-
 
 # =========================================================
 # HOME
@@ -238,7 +245,6 @@ if page == "🏠 Home":
     with c3:
         st.markdown("### ③ View Insights\nSee charts, gaps, and download reports.")
     st.info("Use the sidebar on the left to navigate to your analysis.")
-
 
 # =========================================================
 # OVERVIEW
@@ -266,7 +272,6 @@ elif page == "📊 Overview":
     st.markdown("The MAP Analysis service helps analyze student performance using MAP Growth RIT scores.")
     st.info("**What is a RIT Score?**\n\nA RIT score is the scale used in MAP Growth to measure a student's academic achievement and instructional level.")
 
-
 # =========================================================
 # STUDENT ANALYSIS
 # =========================================================
@@ -277,7 +282,7 @@ elif page == "👨‍🎓 Student Analysis":
     st.download_button("📥 Download Excel Template", objectives_template(), "Student_Analysis_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     st.markdown("---")
     st.header("Step 1: Upload Student Marks Excel")
-    st.info("Row 1: Assessment Information\nRow 2: Headers\nRow 3: 'Points for Objectives' + Maximum Marks\nRow 4+: Student Marks\nLeave empty or enter 'A' for absent students.")
+    st.info("Row 1: Assessment Information\nRow 2: Headers (Objective names)\nRow 3: Objective Descriptions\nRow 4: 'Points for Objectives' + Maximum Marks\nRow 5+: Student Marks\nLeave empty or enter 'A' for absent students.")
     up_file = st.file_uploader("Upload Excel", type=["xlsx", "xls"], key="single")
     if up_file:
         meta_raw = pd.read_excel(up_file, nrows=1, header=None)
@@ -296,12 +301,29 @@ elif page == "👨‍🎓 Student Analysis":
         m4.markdown(f"**📝 Assessment:** {meta_info.get('Assessment name', 'N/A')}")
         st.markdown(f"### 📝 Name: **{meta_info.get('Assessment name', 'N/A')}** | 📚 Subject: **{meta_info.get('Subject', 'N/A')}**")
         raw = pd.read_excel(up_file, header=1)
-        all_obj_names = [c for c in raw.columns if c != 'Student Name']
-        mask = raw.iloc[:, 0].astype(str).str.contains("Points for Objectives", case=False, na=False)
+        # Capture descriptions (row 3) and drop it
+        if str(raw.iloc[0, 0]).strip().lower() != "points for objectives":
+            desc_row = raw.iloc[0]
+            raw_students = raw.iloc[1:].reset_index(drop=True)
+        else:
+            desc_row = None
+            raw_students = raw.copy()
+        obj_desc = {}
+        for c in raw.columns:
+            if c != 'Student Name':
+                if desc_row is not None:
+                    d = str(desc_row[c]).strip()
+                    if d == '' or d.lower() == 'nan':
+                        d = str(c)
+                else:
+                    d = str(c)
+                obj_desc[c] = d
+        all_obj_names = [c for c in raw_students.columns if c != 'Student Name']
+        mask = raw_students.iloc[:, 0].astype(str).str.contains("Points for Objectives", case=False, na=False)
         if not mask.any():
             st.error("❌ Need 'Points for Objectives' row.")
             st.stop()
-        max_row = raw[mask].iloc[0]
+        max_row = raw_students[mask].iloc[0]
         obj_names = []
         obj_max = []
         for c in all_obj_names:
@@ -316,7 +338,7 @@ elif page == "👨‍🎓 Student Analysis":
                 if mx > 0:
                     obj_names.append(c)
                     obj_max.append(mx)
-        student_df = raw[~mask].copy().dropna(subset=['Student Name'])
+        student_df = raw_students[~mask].copy().dropna(subset=['Student Name'])
         student_df = student_df[['Student Name'] + obj_names].copy()
         def is_absent(row):
             has_A = False
@@ -333,6 +355,9 @@ elif page == "👨‍🎓 Student Analysis":
             student_df[c] = pd.to_numeric(student_df[c], errors='coerce').fillna(0)
         total_max = sum(obj_max)
         st.info(f"📋 Auto Total Max Mark = **{total_max}**")
+        st.markdown("### 📚 Objectives")
+        for i, c in enumerate(obj_names, 1):
+            st.markdown(f"{i}. **{c}** – {obj_desc.get(c, c)}")
         errors = []
         for _, row in student_df.iterrows():
             if row['Absent']:
@@ -386,21 +411,12 @@ elif page == "👨‍🎓 Student Analysis":
                 v1, v2 = st.columns(2)
                 with v1:
                     st.subheader("📊 Student Achievement")
-                    st.plotly_chart(
-                        px.bar(rdf.dropna(subset=['Total %']), x='Student Name', y='Total %', color='Level', range_y=[0, 100]),
-                        use_container_width=True
-                    )
+                    st.plotly_chart(px.bar(rdf.dropna(subset=['Total %']), x='Student Name', y='Total %', color='Level', range_y=[0, 100]), use_container_width=True)
                 with v2:
                     st.subheader("📊 Level Distribution")
-                    st.plotly_chart(
-                        px.pie(cdf, names='Level', values='Count', color='Level', color_discrete_map=COLORS, hole=0.3),
-                        use_container_width=True
-                    )
+                    st.plotly_chart(px.pie(cdf, names='Level', values='Count', color='Level', color_discrete_map=COLORS, hole=0.3), use_container_width=True)
                 st.subheader("🎯 Student Support Levels")
-                st.plotly_chart(
-                    px.bar(rdf.dropna(subset=['Total %']), x='Student Name', y='Total %', color='Support Level', range_y=[0, 100]),
-                    use_container_width=True
-                )
+                st.plotly_chart(px.bar(rdf.dropna(subset=['Total %']), x='Student Name', y='Total %', color='Support Level', range_y=[0, 100]), use_container_width=True)
                 support_count = rdf['Support Level'].value_counts().reset_index()
                 support_count.columns = ['Support Level', 'Students']
                 st.subheader("👥 Support Groups")
@@ -410,14 +426,13 @@ elif page == "👨‍🎓 Student Analysis":
                 rdf.to_excel(eb, index=False)
                 st.download_button("📊 Download Excel", eb.getvalue(), "Report.xlsx")
 
-
 # =========================================================
 # GRADE ANALYSIS
 # =========================================================
 
 elif page == "📚 Grade Analysis":
     st.header("📚 Compare Multiple Assessments")
-    st.download_button("📥 Download Excel Template", objectives_template(), "Grade_Analysis_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetTemplate.xlsx")
+    st.download_button("📥 Download Excel Template", objectives_template(), "Grade_Analysis_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     st.info("Choose the number of assessments. Upload files using the same Excel format as Student Analysis. Each assessment score will automatically be converted to a percentage before comparison.")
     n_assess = st.number_input("🔢 Number of assessments", min_value=2, max_value=10, value=2, step=1, key="nass")
     files = []
@@ -443,6 +458,7 @@ elif page == "📚 Grade Analysis":
         for i, m in enumerate(metas):
             st.markdown(f"**File {i + 1} ({m.get('Assessment name', 'N/A')}):** 👩‍🏫 {m.get('Teacher Name', 'N/A')} | 🏫 {m.get('Class', 'N/A')} | 📅 {m.get('Date', 'N/A')} | 📚 {m.get('Subject', 'N/A')}")
         st.markdown(f"### 📊 Comparing: **{' / '.join(names)}** | 📚 Subject: **{metas[0].get('Subject', 'N/A')}**")
+        merged[pct_cols] = merged...  # removed
         merged[pct_cols] = merged[pct_cols].fillna(0)
         merged['Difference'] = (merged[pct_cols[-1]] - merged[pct_cols[0]]).round(1)
         merged['Status'] = merged['Difference'].apply(lambda d: 'Growth' if d > 0.5 else 'Decay' if d < -0.5 else 'Same')
@@ -484,9 +500,8 @@ elif page == "📚 Grade Analysis":
         merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Comparison.xlsx")
 
-
 # =========================================================
-# MAP ANALYSIS (unchanged)
+# MAP ANALYSIS
 # =========================================================
 
 elif page == "📈 MAP Analysis":
@@ -550,7 +565,6 @@ elif page == "📈 MAP Analysis":
         except Exception as e:
             st.error(f"❌ Error reading MAP file: {e}")
 
-
 # =========================================================
 # ACHIEVEMENT & GAPS
 # =========================================================
@@ -567,6 +581,8 @@ elif page == "🎯 Achievement & Gaps":
         if m1 is None or m2 is None:
             st.error("❌ One of the files is missing the 'Total' row/max.")
             st.stop()
+        m1, df1 = read_total_file(f1)
+        m2, df2 = read_total_file(f2)
         st.subheader("📋 Assessment Information")
         st.markdown(f"**Internal:** 👩‍🏫 {m1.get('Teacher Name', 'N/A')} | 🏫 {m1.get('Class', 'N/A')} | 📅 {m1.get('Date', 'N/A')} | 📝 {m1.get('Assessment name', 'N/A')} | 📚 {m1.get('Subject', 'N/A')}")
         st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A')} | 🏫 {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')} | 📚 {m2.get('Subject', 'N/A')}")
@@ -611,7 +627,6 @@ elif page == "🎯 Achievement & Gaps":
         bufc = io.BytesIO()
         merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Internal_External_Comparison.xlsx")
-
 
 # =========================================================
 # REPORTS
