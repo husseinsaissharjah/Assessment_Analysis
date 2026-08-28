@@ -48,7 +48,7 @@ def total_template():
         ["Student 2", 91],
         ["Student 3", 65]
     ]
-    df = df if False else pd.DataFrame(data)
+    df = pd.DataFrame(data)
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, header=False, sheet_name="Assessment")
@@ -56,7 +56,7 @@ def total_template():
     return buffer.getvalue()
 
 def map_template():
-    data = {"Student Name":["Student 1","Student 2","Student 3","Student 4"],"Grade":[7,7,7,7],"Subject":["Mathematics","Mathematics","Mathematics","Mathematics"],"Previous RIT":[205,210,198,215],"Current RIT":[210,214,200,218],"Percentile":[55,70,40,85]}
+    data = {"Student Name":["Student 1","Student 2","Student 3","Student 4"],"Grade":[7,7,7,7],"Subject":["Mathematics","Mathematics","Mathematics","Mathematics"],"Previous RIT":[205,210,198,215],"Current RIT":[210,214,200,218],"Percentile":[55,70,40,30]}
     df = pd.DataFrame(data)
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
@@ -132,7 +132,6 @@ def read_total_file(f):
         return None, None
     total_col = total_col[0]
     data[total_col] = pd.to_numeric(data[total_col], errors='coerce').fillna(0)
-    data['Pct'] = None
     data['Pct'] = (data[total_col] / max_total * 100).round(1) if max_total else 0.0
     return meta, data
 
@@ -193,7 +192,7 @@ elif page == "👨‍🎓 Student Analysis":
         st.subheader("📋 Info")
         m1, m2, m3, m4 = st.columns(4)
         m1.markdown(f"**👩‍🏫 Teacher:** {meta_info.get('Teacher Name', 'N/A')}")
-        m2.markdown(f"**🏫 Class:** {meta_info.get('teacher','N/A') if False else meta_info.get('Class', 'N/A')}")
+        m2.markdown(f"**🏫 Class:** {meta_info.get('Class', 'N/A')}")
         m3.markdown(f"**📅 Date:** {meta_info.get('Date', 'N/A')}")
         m4.markdown(f"**📝 Assessment:** {meta_info.get('Assessment name', 'N/A')}")
         st.markdown(f"### 📝 Name: **{meta_info.get('Assessment name', 'N/A')}** | 📚 Subject: **{meta_info.get('Subject', 'N/A')}**")
@@ -273,7 +272,7 @@ elif page == "👨‍🎓 Student Analysis":
                 st.header("Step 2: Analysis Report")
                 c1, c2, c3, c4, c5, c6 = st.columns(6)
                 cnt = rdf['Level'].value_counts().to_dict()
-                c1.metric("Absent", cnt.get('Absent', 0)); c2.metric("Fail", cnt.get('Fail', 0)); c3.metric("Acceptable", cnt.get('Acceptable', 0))
+                c1.metric("Absent", cnt.get('Absent', 0)); c2.metric("Fail", cnt.get('Fail', 0)); c3.metric("Acceptable", 0) if False else c3.metric("Acceptable", cnt.get('Acceptable', 0))
                 c4.metric("Good", cnt.get('Good', 0)); c5.metric("Very Good", cnt.get('Very Good', 0)); c6.metric("Outstanding", cnt.get('Outstanding', 0))
                 ts = len(rdf)
                 ge60 = (rdf['Total %'] >= 60).sum() / ts * 100 if ts else 0
@@ -308,12 +307,30 @@ elif page == "📚 Grade Analysis":
     for i in range(int(n_assess)):
         files.append(st.file_uploader(f"📄 Assessment {i + 1}", type=["xlsx", "xls"], key=f"up{i}"))
     if all(files):
-        metas = []; merged = None; pct_cols = []; names = []
+        metas = []; merged = None; pct_cols = []; names = []; descriptions = []
         for i, f in enumerate(files):
             meta, df = read_objectives_file(f)
             if meta is None:
                 st.error(f"❌ File {i + 1} missing 'Points for Objectives' row."); st.stop()
-            metas.append(meta); names.append(meta.get('Assessment name', f'Assessment {i + 1}'))
+            # Capture objective descriptions from this file
+            f.seek(0)
+            raw_g = pd.read_excel(f, header=1)
+            if str(raw_g.iloc[0, 0]).strip().lower() != "points for objectives":
+                desc_row_g = raw_g.iloc[0]
+            else:
+                desc_row_g = None
+            obj_desc_g = {}
+            for c in raw_g.columns:
+                if c != 'Student Name':
+                    if desc_row_g is not None:
+                        d = str(desc_row_g[c]).strip()
+                        if d == '' or d.lower() == 'nan': d = str(c)
+                    else:
+                        d = str(c)
+                    obj_desc_g[c] = d
+            metas.append(meta)
+            names.append(meta.get('Assessment name', 'N/A'))
+            descriptions.append(obj_desc_g)
             col = f'Pct{i + 1}'
             keep = df[['Student Name', 'Pct']].rename(columns={'Pct': col})
             merged = keep if merged is None else pd.merge(merged, keep, on='Student Name', how='outer')
@@ -321,6 +338,9 @@ elif page == "📚 Grade Analysis":
         st.subheader("📋 Assessment Information")
         for i, m in enumerate(metas):
             st.markdown(f"**File {i + 1} ({m.get('Assessment name', 'N/A')}):** 👩‍🏫 {m.get('Teacher Name', 'N/A')} | 🏫 {m.get('Class', 'N/A')} | 📅 {m.get('Date', 'N/A')} | 📚 {m.get('Subject', 'N/A')}")
+            st.markdown(f"**📚 Objectives:**")
+            for c, d in descriptions[i].items():
+                st.markdown(f"- **{c}** – {d}")
         st.markdown(f"### 📊 Comparing: **{' / '.join(names)}** | 📚 Subject: **{metas[0].get('Subject', 'N/A')}**")
         merged[pct_cols] = merged[pct_cols].fillna(0)
         merged['Difference'] = (merged[pct_cols[-1]] - merged[pct_cols[0]]).round(1)
@@ -449,9 +469,10 @@ elif page == "🎯 Achievement & Gaps":
             pf = px.pie(cd, names='Status', values='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}, hole=0.3)
             pf.update_traces(textinfo='percent+label'); st.plotly_chart(pf, use_container_width=True)
         st.subheader("📈 Student Gap (Difference)")
+        soc = merged['Status']
         st.plotly_chart(px.bar(merged, x='Student Name', y='Difference', color='Status'), use_container_width=True)
-        st.subheader("👥 Support Groups")
         support_count = merged['Support Level'].value_counts().reset_index(); support_count.columns = ['Support Level', 'Students']
+        st.subheader("👥 Support Groups")
         st.dataframe(support_count, use_container_width=True)
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Internal_External_Comparison.xlsx")
