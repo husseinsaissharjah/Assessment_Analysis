@@ -7,56 +7,34 @@ import os
 st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
 
 # =========================================================
-# CUSTOM CSS – Flat blue menu, NO orange, NO borders
+# CUSTOM CSS – NO orange, NO borders, NO double-blue
 # =========================================================
 
 st.markdown("""
 <style>
-/* Keep all sidebar navigation buttons blue — including the button that was just clicked. */
-.stSidebar .stButton > button,
-.stSidebar .stButton > button[data-testid="stBaseButton-secondary"],
-.stSidebar .stButton > button[data-testid="stBaseButton-primary"],
-.stSidebar .stButton > button[kind="secondary"],
-.stSidebar .stButton > button[kind="primary"] {
+.stSidebar .stButton > button {
     border: none !important;
     border-radius: 8px !important;
     box-shadow: none !important;
     outline: none !important;
 }
-
-/* Remove Streamlit's default orange focus/active/selected styling. */
-.stSidebar .stButton > button:hover,
 .stSidebar .stButton > button:focus,
-.stSidebar .stButton > button:focus-visible,
-.stSidebar .stButton > button:active,
-.stSidebar .stButton > button[data-testid="stBaseButton-primary"],
-.stSidebar .stButton > button[data-testid="stBaseButton-primary"]:hover,
-.stSidebar .stButton > button[data-testid="stBaseButton-primary"]:focus,
-.stSidebar .stButton > button[data-testid="stBaseButton-primary"]:focus-visible,
-.stSidebar .stButton > button[data-testid="stBaseButton-primary"]:active,
-.stSidebar .stButton > button[kind="primary"],
-.stSidebar .stButton > button[kind="primary"]:hover,
-.stSidebar .stButton > button[kind="primary"]:focus,
-.stSidebar .stButton > button[kind="primary"]:focus-visible,
-.stSidebar .stButton > button[kind="primary"]:active {
-    background-color: #1f77b4 !important;
-    color: white !important;
+.stSidebar .stButton > button:active {
+    background-color: transparent !important;
     border: none !important;
-    border-color: transparent !important;
     box-shadow: none !important;
     outline: none !important;
 }
-
-/* Slightly darker blue only while hovering over the currently selected item. */
-.stSidebar .stButton > button[data-testid="stBaseButton-primary"]:hover,
-.stSidebar .stButton > button[kind="primary"]:hover {
-    background-color: #155e8c !important;
+.stSidebar .stButton > button:hover {
+    background-color: #1f77b4 !important;
+    color: white !important;
+    border: none !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # =========================================================
-# MODERN SIDEBAR NAVIGATION
+# MODERN SIDEBAR NAVIGATION (active = div, others = buttons)
 # =========================================================
 
 if "page" not in st.session_state:
@@ -73,13 +51,16 @@ nav_pages = [
     "📑 Reports"
 ]
 for p in nav_pages:
-    if st.sidebar.button(
-        p,
-        key=f"nav_{p}",
-        type="primary" if st.session_state.page == p else "secondary",
-        use_container_width=True
-    ):
-        st.session_state.page = p
+    if st.session_state.page == p:
+        st.sidebar.markdown(
+            f"<div style='background-color:#1f77b4;color:white;padding:0.5rem;"
+            f"border-radius:8px;text-align:center;font-weight:600;margin-bottom:0.25rem;'"
+            f">{p}</div>",
+            unsafe_allow_html=True
+        )
+    else:
+        if st.sidebar.button(p, key=f"nav_{p}", use_container_width=True):
+            st.session_state.page = p
 
 page = st.session_state.page
 
@@ -219,7 +200,7 @@ def read_total_file(f):
     return meta, data
 
 # =========================================================
-# PAGES
+# PAGES (unchanged from your version)
 # =========================================================
 
 if page == "🏠 Home":
@@ -382,8 +363,7 @@ elif page == "👨‍🎓 Student Analysis":
                 st.plotly_chart(px.bar(rdf.dropna(subset=['Total %']), x='Student Name', y='Total %', color='Support Level', range_y=[0, 100]), use_container_width=True)
                 support_count = rdf['Support Level'].value_counts().reset_index(); support_count.columns = ['Support Level', 'Students']
                 st.subheader("👥 Support Groups")
-                support_count_df = support_count
-                st.dataframe(support_count_df, use_container_width=True)
+                st.dataframe(support_count, use_container_width=True)
                 st.dataframe(rdf, use_container_width=True)
                 eb = io.BytesIO(); rdf.to_excel(eb, index=False)
                 st.download_button("📊 Download Excel", eb.getvalue(), "Report.xlsx")
@@ -428,7 +408,7 @@ elif page == "📚 Grade Analysis":
             st.markdown("**📚 Objectives:**")
             for c, d in descriptions[i].items():
                 st.markdown(f"- **{c}** – {d}")
-        st.markdown(f"### 📊 Comparing: **{' / '.join(names)}** | 📚 Subject: **{metas[0].get('Subject', 'N/A')}**")
+        st.markdown(f"### 📊 Comparing: **{' / '.join(names)}** | 📚 Subject: **{metas[0].get('Subject', 'N/A')}**" if False else st.markdown(f"### 📊 Comparing: **{' / '.join(names)}** | 📚 Subject: **{metas[0].get('Subject', 'N/A')}**"))
         merged[pct_cols] = merged[pct_cols].fillna(0)
         merged['Difference'] = (merged[pct_cols[-1]] - merged[pct_cols[0]]).round(1)
         merged['Status'] = merged['Difference'].apply(lambda d: 'Growth' if d > 0.5 else 'Decay' if d < -0.5 else 'Same')
@@ -440,7 +420,6 @@ elif page == "📚 Grade Analysis":
         st.subheader("📢 Summary")
         m1, m2, m3 = st.columns(3)
         m1.metric("🟩 Growth", gc); m2.metric("🟥 Decay", dc); m3.metric("🟨 Same", sc)
-        cd = pd.DataFrame()
         cd = pd.DataFrame({'Status': ['Growth', 'Decay', 'Same'], 'Count': [gc, dc, sc]})
         cd['Status'] = pd.Categorical(cd['Status'], categories=['Decay', 'Same', 'Growth'], ordered=True)
         v1, v2 = st.columns(2)
