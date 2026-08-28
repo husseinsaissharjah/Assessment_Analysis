@@ -6,7 +6,36 @@ import os
 
 st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
 
-# ---------- Modern Sidebar Navigation ----------
+# =========================================================
+# CUSTOM CSS – Flat blue sidebar menu, no borders
+# =========================================================
+
+st.markdown("""
+    <style>
+    .stSidebar .stButton > button {
+        border: none !important;
+        border-radius: 8px !important;
+        transition: background-color 0.15s ease;
+    }
+    .stSidebar .stButton > button:hover {
+        background-color: #1f77b4 !important;
+        color: white !important;
+    }
+    .stSidebar .stButton > button[data-baseweb-button="true"][kind="primary"] {
+        background-color: #1f77b4 !important;
+        color: white !important;
+        border: none !important;
+    }
+    .stSidebar .stButton > button[data-baseweb-button="true"][kind="primary"]:hover {
+        background-color: #155e8c !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# =========================================================
+# MODERN SIDEBAR NAVIGATION
+# =========================================================
+
 if "page" not in st.session_state:
     st.session_state.page = "🏠 Home"
 
@@ -32,6 +61,9 @@ for p in nav_pages:
 page = st.session_state.page
 
 # =========================================================
+# HELPERS & DATA
+# =========================================================
+
 COLORS = {'Absent':'#808080','Fail':'#d62728','Acceptable':'#ff7f0e','Good':'#2ca02c','Very Good':'#1f77b4','Outstanding':'#9467bd'}
 ORDER = ['Absent','Fail','Acceptable','Good','Very Good','Outstanding']
 
@@ -162,6 +194,9 @@ def read_total_file(f):
     return meta, data
 
 # =========================================================
+# PAGES
+# =========================================================
+
 if page == "🏠 Home":
     if os.path.exists("logo.png"): st.image("logo.png", width=120)
     st.title("SAIS Analyzer")
@@ -296,10 +331,11 @@ elif page == "👨‍🎓 Student Analysis":
                 rdf['Support Level'] = rdf['Total %'].apply(support_level)
                 st.header("Step 2: Analysis Report")
                 c1, c2, c3, c4, c5, c6 = st.columns(6)
-                c1.metric("Absent", cnt := rdf['Level'].value_counts().to_dict()).get('Absent', 0)
+                cnt = rdf['Level'].value_counts().to_dict()
+                c1.metric("Absent", cnt.get('Absent', 0))
                 c2.metric("Fail", cnt.get('Fail', 0))
                 c3.metric("Acceptable", cnt.get('Acceptable', 0))
-                c4.metric("Good", cnt.get('Good', 0))
+                c4.metric("Good", cnt and True) if False else c4.metric("Good", cnt.get('Good', 0))
                 c5.metric("Very Good", cnt.get('Very Good', 0))
                 c6.metric("Outstanding", cnt.get('Outstanding', 0))
                 ts = len(rdf)
@@ -492,8 +528,7 @@ elif page == "🎯 Achievement & Gaps":
         with v2:
             st.markdown("**Pie Chart**")
             pf = px.pie(cd, names='Status', values='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}, hole=0.3)
-            pf.update_traces(textinfo='percent+label'); pf.update_traces(textinfo='percent+label')
-            st.plotly_chart(pf, use_container_width=True)
+            pf.update_traces(textinfo='percent+label'); st.plotly_chart(pf, use_container_width=True)
         st.subheader("📈 Student Gap (Difference)")
         st.plotly_chart(px.bar(merged, x='Student Name', y='Difference', color='Status'), use_container_width=True)
         support_count = merged['Support Level'].value_counts().reset_index(); support_count.columns = ['Support Level', 'Students']
