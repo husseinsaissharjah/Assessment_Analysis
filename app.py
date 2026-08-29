@@ -88,6 +88,26 @@ def total_template():
     buffer.seek(0)
     return buffer.getvalue()
 
+def gaps_template():
+    data = [
+        ["Teacher Name: Example Teacher", "Class: Grade 7A", "Date: 27/08/2026", "Assessment name: Internal vs MAP", "Subject: Mathematics"],
+        ["Student Name", "Total of Internal", "Percentile of MAP"],
+        ["Total of Internal", 100, ""],
+        ["Student 1", 82, 75],
+        ["Student 2", 91, 88],
+        ["Student 3", 65, 50]
+    ]
+    from openpyxl import Workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Assessment"
+    for r in data:
+        ws.append(r)
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    return buffer.getvalue()
+
 def map_template():
     data = {"Student Name":["Student 1","Student 2","Student 3","Student 4"],"Grade":[7,7,7,7],"Subject":["Mathematics","Mathematics","Mathematics","Mathematics"],"Previous RIT":[205,210,198,215],"Current RIT":[210,214,200,218],"Percentile":[55,70,40,85]}
     df = pd.DataFrame(data)
@@ -117,7 +137,7 @@ def read_objectives_file(f):
     valid_cols = []
     total_max = 0.0
     for c in raw_obj_cols:
-        hdr = str(c).strip()
+        hdr = str(.join([]) if False else c).strip()
         mx_raw = max_row[c]
         mx_str = str(mx_raw).strip()
         if hdr != '' and hdr.lower() != 'nan' and not hdr.startswith('Unnamed') and mx_str != '' and mx_str.lower() != 'nan':
@@ -167,6 +187,40 @@ def read_total_file(f):
     data[total_col] = pd.to_numeric(data[total_col], errors='coerce').fillna(0)
     data['Pct'] = (data[total_col] / max_total * 100).round(1) if max_total else 0.0
     return meta, data
+
+def read_gaps_file(f):
+    raw = pd.read_excel(f, header=None)
+    meta = {}
+    for c in raw.iloc[0, :]:
+        val = str(c).strip()
+        if ':' in val:
+            k, v = val.split(':', 1)
+            meta[k.strip()] = v.strip()
+    headers = [str(x).strip() for x in raw.iloc[1, :].tolist()]
+    total_idx = None
+    for i in range(2, len(raw)):
+        if 'total of internal' in str(raw.iloc[i, 0]).lower():
+            total_idx = i
+            break
+    if total_idx is None:
+        return None, None
+    try: max_total = float(raw.iloc[total_idx, 1])
+    except: max_total = 100.0
+    data = raw.iloc[2:, :].copy()
+    data.columns = headers
+    data = data[data.iloc[:, 0].astype(str).str.lower().str.contains('total') == False]
+    data = data.rename(columns={data.columns[0]: 'Student Name'})
+    internal_col = [c for c in data.columns if 'total of internal' in str(c).lower()]
+    map_col = [c for c in data.columns if 'percentile of map' in str(c).lower()]
+    if not internal_col or not map_col:
+        return None, None
+    internal_col = internal_col[0]
+    map_col = map_col[0]
+    data[internal_col] = pd.to_numeric(data[internal_col], errors='coerce').fillna(0)
+    data[map_col] = pd.to_numeric(data[map_col], errors='coerce').fillna(0)
+    data['Pct1'] = (data[internal_col] / max_total * 100).round(1) if max_total else 0.0
+    data['Pct2'] = data[map_col].round(1)
+    return meta, data[['Student Name', 'Pct1', 'Pct2']]
 
 def read_section_file(f):
     meta, df = read_objectives_file(f)
@@ -230,8 +284,8 @@ elif page == "📊 Overview":
         st.markdown("- Compare assessment results.\n- Convert scores to percentages.\n- Identify student growth.\n- Identify student decay.\n- Identify students with stable performance.\n- View grade performance trends.")
     with c3:
         st.subheader("🎯 Achievement & Gaps")
-        st.write("Compare Internal Assessment results with External Assessment results to identify achievement gaps.")
-        st.markdown("- Compare Internal vs External results.\n- Identify performance gaps.\n- Identify Growth, Decay, and Same performance.\n- Support intervention planning.\n- Download comparison reports.")
+        st.write("Compare Internal Assessment results with MAP Percentile in one sheet to identify achievement gaps.")
+        st.markdown("- Upload one sheet with Internal Total and MAP Percentile.\n- Identify performance gaps.\n- Identify Growth, Decay, and Same performance.\n- Support intervention planning.\n- Download comparison reports.")
     st.markdown("---")
     st.subheader("🗺️ MAP Analysis")
     st.markdown("The MAP Analysis service helps analyze student performance using MAP Growth RIT scores.")
@@ -315,7 +369,7 @@ elif page == "📝 Objective Analysis":
             if row['Absent']: continue
             for j, c in enumerate(obj_names):
                 if row[c] > obj_max[j]: errors.append(f"• {row['Student Name']}: {c}={row[c]} > max {obj_max[j]}")
-                if row[c] < 0: errors.append(f"• {row['Student Name']}: {c}={row[c]} negative")
+                if row[c] < 0: errors.append(f"• {row['Student Name']}: {c} Negative")
         st.subheader("📊 Preview")
         st.dataframe(student_df, use_container_width=True)
         if errors:
@@ -375,7 +429,7 @@ elif page == "📈 Class Total Average Analysis":
     n_assess = st.number_input("🔢 Number of assessments", min_value=2, max_value=10, value=2, step=1, key="nass")
     files = []
     for i in range(int(n_assess)):
-        files.append(st.file_uploader(f"📄 Assessment {i + 1}", type=["xlsx", "xls"], key=f"up{i}"))
+        files.append(st.file_uploader(f"📄 Assessment {i}", type=["xlsx", "xls"], key=f"up{i}"))
     if all(files):
         metas = []; merged = None; pct_cols = []; names = []; descriptions = []
         for i, f in enumerate(files):
@@ -397,7 +451,9 @@ elif page == "📈 Class Total Average Analysis":
                     else:
                         d = str(c)
                     obj_desc_g[c] = d
-            metas.append(meta); names.append(meta.get('Assessment name', 'N/A')); descriptions.append(obj_desc_g)
+            metas.append(meta)
+            names.append(meta.get('Assessment name', 'N/A'))
+            descriptions.append(obj_desc_g)
             col = f'Pct{i + 1}'
             keep = df[['Student Name', 'Pct']].rename(columns={'Pct': col})
             merged = keep if merged is None else pd.merge(merged, keep, on='Student Name', how='outer')
@@ -500,29 +556,27 @@ elif page == "🗺️ MAP Analysis":
             st.error(f"❌ Error reading MAP file: {e}")
 
 elif page == "🎯 Achievement & Gaps":
-    st.header("🎯 Comparison between Internal and External Assessments")
-    st.download_button("📥 Download Excel Template", total_template(), "Achievement_Gaps_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    st.info("Upload two files.\n\nExcel Format:\nRow 1: Assessment Information\nRow 2: Headers (Student Name, Total)\nRow 3: Total + Maximum Mark\nRow 4+: Student Marks")
-    f1 = st.file_uploader("📄 Internal Assessment", type=["xlsx", "xls"], key="intf")
-    f2 = st.file_uploader("📄 External Assessment", type=["xlsx", "xls"], key="extf")
-    if f1 and f2:
-        m1, df1 = read_total_file(f1)
-        m2, df2 = read_total_file(f2)
-        if m1 is None or m2 is None:
-            st.error("❌ One of the files is missing the 'Total' row/max."); st.stop()
+    st.header("🎯 Achievement & Gaps (Internal vs MAP)")
+    st.download_button("📥 Download Excel Template", gaps_template(), "Achievement_Gaps_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    st.info(
+        "This service compares a class's Internal Assessment total marks with their MAP Percentile "
+        "to identify achievement gaps. Upload ONE Excel sheet with columns: "
+        "**Student Name**, **Total of Internal**, **Percentile of MAP**. "
+        "Row 1: Assessment Information | Row 2: Headers | Row 3: 'Total of Internal' + Maximum Mark | Row 4+: Student Marks."
+    )
+    f = st.file_uploader("📄 Upload Single Sheet", type=["xlsx", "xls"], key="gaps")
+    if f:
+        m, df = read_gaps_file(f)
+        if m is None:
+            st.error("❌ File missing required rows/columns (Total of Internal / Percentile of MAP)."); st.stop()
         st.subheader("📋 Assessment Information")
-        st.markdown(f"**Internal:** 👩‍🏫 {m1.get('Teacher Name', 'N/A')} | 🏫 {m1.get('Class', 'N/A')} | 📅 {m1.get('Date', 'N/A')} | 📝 {m1.get('Assessment name', 'N/A')} | 📚 {m1.get('Subject', 'N/A')}")
-        st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A')} | 🏫 {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')} | 📚 {m2.get('Subject', 'N/A')}")
-        internal_name = m1.get('Assessment name', 'Internal')
-        external_name = m2.get('Assessment name', 'External')
-        st.markdown(f"### 📊 Comparing: **{internal_name} / {external_name}** | 📚 Subject: **{m1.get('Subject', 'N/A')}**")
-        merged = pd.merge(df1[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct1'}), df2[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct2'}), on='Student Name', how='outer').fillna(0)
-        merged['Difference'] = (merged['Pct2'] - merged['Pct1']).round(1)
-        merged['Status'] = merged['Difference'].apply(lambda d: 'Growth' if d > 0.5 else 'Decay' if d < -0.5 else 'Same')
-        merged['Support Level'] = merged['Pct2'].apply(support_level)
+        st.markdown(f"👩‍🏫 {m.get('Teacher Name', 'N/A')} | 🏫 {m.get('Class', 'N/A')} | 📅 {m.get('Date', 'N/A')} | 📝 {m.get('Assessment name', 'N/A')} | 📚 {m.get('Subject', 'N/A')}")
+        df['Difference'] = (df['Pct2'] - df['Pct1']).round(1)
+        df['Status'] = df['Difference'].apply(lambda d: 'Growth' if d > 0.5 else 'Decay' if d < -0.5 else 'Same')
+        df['Support Level'] = df['Pct2'].apply(support_level)
         st.subheader("📊 Comparison Table (Percentage Based)")
-        st.dataframe(merged.style.map(color_cell, subset=['Status']), use_container_width=True)
-        cnt = merged['Status'].value_counts().to_dict()
+        st.dataframe(df.style.map(color_cell, subset=['Status']), use_container_width=True)
+        cnt = df['Status'].value_counts().to_dict()
         gc = cnt.get('Growth', 0); dc = cnt.get('Decay', 0); sc = cnt.get('Same', 0)
         st.subheader("📢 Summary")
         mc1, mc2, mc3 = st.columns(3)
@@ -538,12 +592,12 @@ elif page == "🎯 Achievement & Gaps":
             pf = px.pie(cd, names='Status', values='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}, hole=0.3)
             pf.update_traces(textinfo='percent+label'); st.plotly_chart(pf, use_container_width=True)
         st.subheader("📈 Student Gap (Difference)")
-        st.plotly_chart(px.bar(merged, x='Student Name', y='Difference', color='Status'), use_container_width=True)
-        support_count = merged['Support Level'].value_counts().reset_index(); support_count.columns = ['Support Level', 'Students']
+        st.plotly_chart(px.bar(df, x='Student Name', y='Difference', color='Status'), use_container_width=True)
+        support_count = df['Support Level'].value_counts().reset_index(); support_count.columns = ['Support Level', 'Students']
         st.subheader("👥 Support Groups")
         st.dataframe(support_count, use_container_width=True)
-        bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
-        st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Internal_External_Comparison.xlsx")
+        bufc = io.BytesIO(); df.to_excel(bufc, index=False)
+        st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Internal_MAP_Comparison.xlsx")
 
 elif page == "📑 Reports":
     st.title("📑 Reports")
@@ -683,7 +737,7 @@ elif page == "📑 Reports":
                 for idx, f in enumerate(sec_files, 1):
                     f.seek(0)
                     raw_check = pd.read_excel(f, header=1)
-                    has_total_row = raw_check.iloc[:, 0].astype(str) if False else raw_check.iloc[:, 0].astype(str).str.contains("Points for Objectives", case=False, na=False).any()
+                    has_total_row = raw_check.iloc[:, 0].astype(str).str.contains("Points for Objectives", case=False, na=False).any()
                     if has_total_row:
                         meta, df = read_objectives_file(f)
                     else:
