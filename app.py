@@ -4,7 +4,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import io
 import os
-from streamlit import column_config
 
 st.set_page_config(page_title="Assessment Analysis", page_icon="📊", layout="wide")
 
@@ -475,7 +474,7 @@ elif page == "📈 Class Total Average Analysis":
             pf = px.pie(cd, names='Status', values='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}, hole=0.3)
             pf.update_traces(textinfo='percent+label'); st.plotly_chart(pf, use_container_width=True)
         avg = merged[pct_cols].mean().reset_index(); avg.columns = ['Assessment', 'Average']
-        avg['Assessment'] = avg['Assessment'].str.replace('Pct', 'Assess ')
+        avg['Assessment'] = avg['Assessment'].str.replace('Pct', 'Assess')
         st.subheader("📈 Average Score Trend (%)")
         st.plotly_chart(px.line(avg, x='Assessment', y='Average', markers=True), use_container_width=True)
         st.subheader("📈 Student Growth (Difference)")
@@ -526,7 +525,7 @@ elif page == "🗺️ MAP Analysis":
             v1, v2 = st.columns(2)
             with v1:
                 st.subheader("📈 Student Growth")
-                st.plotly_chart(px.bar(cdf if False else map_df, x="Student Name", y="RIT Growth", color="Growth Status") if False else px.bar(map_df, x="Student Name", y="RIT Growth", color="Growth Status"), use_container_width=True)
+                st.plotly_chart(px.bar(map_df, x="Student Name", y="RIT Growth", color="Growth Status"), use_container_width=True)
             with v2:
                 st.subheader("📊 Growth Distribution")
                 st.plotly_chart(px.pie(status_count, names="Status", values="Count", hole=0.3), use_container_width=True)
@@ -588,10 +587,6 @@ elif page == "🎯 Achievement & Gaps":
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Internal_MAP_Comparison.xlsx")
 
 elif page == "📑 Reports":
-    st.title("📑 Reports")
-    st.markdown("### 🛠️ Available Services")
-    service = st.radio("Select Service", ["Compare between sections"])
-
     if service == "Compare between sections":
         st.header("🔍 Compare Between Sections")
         comp_type = st.radio("Comparison Type", [
