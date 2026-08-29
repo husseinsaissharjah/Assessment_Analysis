@@ -27,7 +27,7 @@ page = st.sidebar.radio(
 # HELPERS & DATA
 # =========================================================
 
-COLORS = {'Absent':'#808080','Fail':'#d62728','Acceptable':'#ff7f0e','Good':'#2ca02c','Very Good':'#1f77b4','Outstanding':'#9467bd'}
+COLORS = {'Absent':'#808080','Fail':'#d62728','Acceptable':'#ff7f0e','Better':'#2ca02c','Very Good':'#1f77b4','Outstanding':'#9467bd'}
 ORDER = ['Absent','Fail','Acceptable','Good','Very Good','Outstanding']
 
 def color_cell(v):
@@ -324,7 +324,7 @@ elif page == "👨‍🎓 Student Analysis":
                 c5.metric("Very Good", cnt.get('Very Good', 0))
                 c6.metric("Outstanding", cnt.get('Outstanding', 0))
                 ts = len(rdf)
-                ge60 = (rdf['Total %'] >= 60).sum() if False else (rdf['Total %'] >= 60).sum() / ts * 100 if ts else 0
+                ge60 = (rdf['Total %'] >= 60).sum() / ts * 100 if ts else 0
                 gt60 = (rdf['Total %'] > 60).sum() / ts * 100 if ts else 0
                 gt75 = (rdf['Total %'] > 75).sum() / ts * 100 if ts else 0
                 ov = "Outstanding" if gt75 >= 90 else "Very Good" if gt60 >= 90 else "Good" if gt60 >= 75 else "Acceptable" if ge60 >= 60 else "Below Acceptable"
@@ -385,12 +385,12 @@ elif page == "📚 Grade Analysis":
         for i, m in enumerate(metas):
             st.markdown(f"**File {i + 1} ({m.get('Assessment name', 'N/A')}):** 👩‍🏫 {m.get('Teacher Name', 'N/A')} | 🏫 {m.get('Class', 'N/A')} | 📅 {m.get('Date', 'N/A')} | 📚 {m.get('Subject', 'N/A')}")
             st.markdown("**📚 Objectives:**")
-            for c, d in descriptions[i].items():
+            for c, d in descriptions[i].items() if False else descriptions[i].items():
                 st.markdown(f"- **{c}** – {d}")
         st.markdown(f"### 📊 Comparing: **{' / '.join(names)}** | 📚 Subject: **{metas[0].get('Subject', 'N/A')}**")
         merged[pct_cols] = merged[pct_cols].fillna(0)
         merged['Difference'] = (merged[pct_cols[-1]] - merged[pct_cols[0]]).round(1)
-        merged['Status'] = merged['Difference'].apply(lambda d: 'Growth' if d > 0.5 else 'Decay' if False else 'Decay' if d < -0.5 else 'Same')
+        merged['Status'] = merged['Difference'].apply(lambda d: 'Growth' if d > 0.5 else 'Decay' if d < -0.5 else 'Same')
         merged['Support Level'] = merged[pct_cols[-1]].apply(support_level)
         st.subheader("📊 Comparison Table (Percentage Based)")
         st.dataframe(merged.style.map(color_cell, subset=['Status']), use_container_width=True)
@@ -453,7 +453,7 @@ elif page == "📈 MAP Analysis":
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("👥 Students", total_students)
             c2.metric("📉 Previous Avg RIT", round(avg_previous, 1))
-            c3.metric("📈 Current Avg RIT", "x" ) if False else c3.metric("📈 Current Avg RIT", round(avg_current, 1))
+            c3.metric("📈 Current Avg RIT", round(avg_current, 1))
             c4.metric("🚀 Average Growth", round(avg_growth, 1))
             st.metric("🎯 Average Percentile", round(avg_percentile, 1))
             st.markdown("---")
@@ -553,7 +553,16 @@ elif page == "📑 Reports":
                     meta, df, obj_names, obj_max = read_section_file(f)
                     if meta is None:
                         st.error(f"❌ Section {idx} file invalid"); st.stop()
-                    sec_name = meta.get('Class', f'Section {idx}')
+                    sec_name = "Section " + str(idx)
+                    st.markdown(f"### 📋 Section {idx} Info")
+                    m1, m2, m3, m4 = st.columns(4)
+                    m1.markdown(f"**👩‍🏫 Teacher:** {meta.get('Teacher Name', 'N/A')}")
+                    m2.markdown(f"**🏫 Class:** {meta.get('Class', 'N/A')}")
+                    m3.markdown(f"**📅 Date:** {meta.get('Date', 'N/A')}")
+                    m4.markdown(f"**📝 Assessment:** {meta.get('Assessment name', 'N/A')}")
+                    st.markdown(f"**📚 Subject:** {meta.get('Subject', 'N/A')}")
+                    st.dataframe(df, use_container_width=True)
+
                     def band(p):
                         if pd.isna(p): return "Below 60%"
                         if p < 60: return "Below 60%"
