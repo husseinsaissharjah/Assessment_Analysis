@@ -6,7 +6,7 @@ import io
 import os
 from streamlit import column_config
 
-st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Assessment Analysis", page_icon="📊", layout="wide")
 
 # =========================================================
 # SIDEBAR NAVIGATION (radio)
@@ -17,9 +17,9 @@ page = st.sidebar.radio(
     [
         "🏠 Home",
         "📊 Overview",
-        "👨‍🎓 Student Analysis",
-        "📚 Grade Analysis",
-        "📈 MAP Analysis",
+        "📝 Objective Analysis",
+        "📈 Total Average Analysis",
+        "🗺️ MAP Analysis",
         "🎯 Achievement & Gaps",
         "📑 Reports"
     ]
@@ -195,7 +195,6 @@ def read_section_file(f):
                 d = str(c)
         else:
             d = str(c)
-        d = str(d)
         obj_desc[c] = d
     return meta, df, obj_names, obj_max, obj_desc
 
@@ -205,7 +204,7 @@ def read_section_file(f):
 
 if page == "🏠 Home":
     if os.path.exists("logo.png"): st.image("logo.png", width=120)
-    st.title("SAIS Analyzer")
+    st.title("Assessment Analysis")
     st.markdown("### Student Assessment & Achievement Dashboard")
     st.markdown("Analyze MAP, internal assessments, grades, and student performance in seconds.")
     st.markdown("---")
@@ -217,16 +216,16 @@ if page == "🏠 Home":
     st.info("Use the sidebar on the left to navigate to your analysis.")
 
 elif page == "📊 Overview":
-    st.title("📊 SAIS Analyzer Overview")
-    st.markdown("The SAIS Analyzer is designed to help teachers, coordinators, and school leaders analyze student achievement quickly and consistently.")
+    st.title("📊 Assessment Analysis Overview")
+    st.markdown("The Assessment Analysis tool is designed to help teachers, coordinators, and school leaders analyze student achievement quickly and consistently.")
     st.markdown("---")
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.subheader("👨‍🎓 Student Analysis")
+        st.subheader("📝 Objective Analysis")
         st.write("Analyze one assessment at a time using learning objectives and student marks.")
         st.markdown("- Calculate student totals and percentages.\n- Identify absent students.\n- Classify student achievement levels.\n- View bar and pie charts.\n- Download the final analysis as Excel.")
     with c2:
-        st.subheader("📚 Grade Analysis")
+        st.subheader("📈 Total Average Analysis")
         st.write("Compare multiple assessments for the same group of students and monitor their academic progress.")
         st.markdown("- Compare assessment results.\n- Convert scores to percentages.\n- Identify student growth.\n- Identify student decay.\n- Identify students with stable performance.\n- View grade performance trends.")
     with c3:
@@ -234,12 +233,12 @@ elif page == "📊 Overview":
         st.write("Compare Internal Assessment results with External Assessment results to identify achievement gaps.")
         st.markdown("- Compare Internal vs External results.\n- Identify performance gaps.\n- Identify Growth, Decay, and Same performance.\n- Support intervention planning.\n- Download comparison reports.")
     st.markdown("---")
-    st.subheader("📈 MAP Analysis")
+    st.subheader("🗺️ MAP Analysis")
     st.markdown("The MAP Analysis service helps analyze student performance using MAP Growth RIT scores.")
     st.info("**What is a RIT Score?**\n\nA RIT score is the scale used in MAP Growth to measure a student's academic achievement and instructional level.")
 
-elif page == "👨‍🎓 Student Analysis":
-    st.header("👨‍🎓 Student Analysis")
+elif page == "📝 Objective Analysis":
+    st.header("📝 Objective Analysis")
     st.markdown("Analyze a single assessment based on learning objectives and student marks.")
     st.download_button("📥 Download Excel Template", objectives_template(), "Student_Analysis_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     st.markdown("---")
@@ -368,10 +367,10 @@ elif page == "👨‍🎓 Student Analysis":
                 eb = io.BytesIO(); rdf.to_excel(eb, index=False)
                 st.download_button("📊 Download Excel", eb.getvalue(), "Report.xlsx")
 
-elif page == "📚 Grade Analysis":
-    st.header("📚 Compare Multiple Assessments")
+elif page == "📈 Total Average Analysis":
+    st.header("📈 Total Average Analysis")
     st.download_button("📥 Download Excel Template", objectives_template(), "Grade_Analysis_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    st.info("Choose the number of assessments. Upload files using the same Excel format as Student Analysis. Each assessment score will automatically be converted to a percentage before comparison.")
+    st.info("Choose the number of assessments. Upload files using the same Excel format as Objective Analysis. Each assessment score will automatically be converted to a percentage before comparison.")
     n_assess = st.number_input("🔢 Number of assessments", min_value=2, max_value=10, value=2, step=1, key="nass")
     files = []
     for i in range(int(n_assess)):
@@ -442,8 +441,8 @@ elif page == "📚 Grade Analysis":
         bufc = io.BytesIO(); merged.to_excel(bufc, index=False)
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Comparison.xlsx")
 
-elif page == "📈 MAP Analysis":
-    st.title("📈 MAP Analysis")
+elif page == "🗺️ MAP Analysis":
+    st.title("🗺️ MAP Analysis")
     st.info("### What is a RIT Score?\nThe RIT score is the scale used by MAP Growth to measure student achievement and instructional level.")
     st.markdown("### What this analysis does\n- Calculates RIT growth.\n- Identifies Growth, Decay, or Same performance.\n- Shows student percentile.\n- Calculates grade average RIT.\n- Identifies students below the selected percentile.\n- Identifies students requiring intervention or enrichment.")
     st.download_button("📥 Download MAP Excel Template", map_template(), "MAP_Analysis_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
@@ -513,7 +512,9 @@ elif page == "🎯 Achievement & Gaps":
         st.subheader("📋 Assessment Information")
         st.markdown(f"**Internal:** 👩‍🏫 {m1.get('Teacher Name', 'N/A')} | 🏫 {m1.get('Class', 'N/A')} | 📅 {m1.get('Date', 'N/A')} | 📝 {m1.get('Assessment name', 'N/A')} | 📚 {m1.get('Subject', 'N/A')}")
         st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A')} | 🏫 {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')} | 📚 {m2.get('Subject', 'N/A')}")
-        st.markdown(f"### 📊 Comparing: **{m1.get('Assessment name', 'Internal')} / {m from 'N/A'}** | 📚 Subject: **{m1.get('Subject', 'N/A')}**".replace("{m from 'N/A'}", "External"))
+        internal_name = m1.get('Assessment name', 'Internal')
+        external_name = m2.get('Assessment name', 'External')
+        st.markdown(f"### 📊 Comparing: **{internal_name} / {external_name}** | 📚 Subject: **{m1.get('Subject', 'N/A')}**")
         merged = pd.merge(df1[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct1'}), df2[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct2'}), on='Student Name', how='outer').fillna(0)
         merged['Difference'] = (merged['Pct2'] - merged['Pct1']).round(1)
         merged['Status'] = merged['Difference'].apply(lambda d: 'Growth' if d > 0.5 else 'Decay' if d < -0.5 else 'Same')
@@ -559,7 +560,7 @@ elif page == "📑 Reports":
         if comp_type == "By Assessment Objectives":
             st.subheader("📚 By Assessment Objectives")
             st.info(
-                "Select number of classes, then upload one Student Analysis "
+                "Select number of classes, then upload one Objective Analysis "
                 "Excel file per class. Bands: Below 60% (Weak), 60-75% (Acceptable), "
                 "76-85% (Very Good), 86-100% (Excellent)."
             )
@@ -667,7 +668,7 @@ elif page == "📑 Reports":
         elif comp_type == "By Assessment Total Mark":
             st.subheader("📊 By Assessment Total Mark")
             st.info(
-                "Upload Student Analysis (objectives) OR Total Mark sheets per class. "
+                "Upload Objective Analysis (objectives) OR Total Mark sheets per class. "
                 "All will be converted to percentage. Bands: Below 60% (Weak), 60-75% (Acceptable), "
                 "76-85% (Very Good), 86-100% (Excellent)."
             )
