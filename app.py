@@ -1,8 +1,10 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import io
 import os
+from streamlit import column_config
 
 st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
 
@@ -27,7 +29,7 @@ page = st.sidebar.radio(
 # HELPERS & DATA
 # =========================================================
 
-COLORS = {'Absent':'#808080','Fail':'#d62728','Acceptable':'#ff7f0e','Better':'#2ca02c','Very Good':'#1f77b4','Outstanding':'#9467bd'}
+COLORS = {'Absent':'#808080','Fail':'#d62728','Acceptable':'#ff7f0e','Good':'#2ca02c','Very Good':'#1f77b4','Outstanding':'#9467bd'}
 ORDER = ['Absent','Fail','Acceptable','Good','Very Good','Outstanding']
 
 def color_cell(v):
@@ -79,7 +81,8 @@ def total_template():
     return buffer.getvalue()
 
 def map_template():
-    data = {"Student Name":["Student 1","Student 2","Student 3","Student 4"],"Grade":[7,7,7,7],"Subject":["Mathematics","Mathematics","Mathematics","Mathematics"],"Previous RIT":[205,210,198,215],"Current RIT":[210,214,200,218],"Percentile":[55,70,40,85]}
+    data = {"Student Name":["Student 1","Student 2","Student 3","Student 4"],"Grade":[7,7,7,7],"Subject":["Mathematics","Mathematics","Mathematics","Mathematics"],"Previous RIT":[205,210,198,215],"Current RIT":[210],"Percentile":[55,70,40,85]}
+    data["Current RIT"] = [210,214,200,218]
     df = pd.DataFrame(data)
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
@@ -161,22 +164,32 @@ def read_total_file(f):
 def read_section_file(f):
     meta, df = read_objectives_file(f)
     if meta is None:
-        return None, None, None, None
+        return None, None, None, None, None
     f.seek(0)
-    raw = pd.read_excel(f, header=1)
-    if str(raw.iloc[0, 0]).strip().lower() != "points for objectives":
-        raw = raw.iloc[1:].reset_index(drop=True)
-    mask = raw.iloc[:, 0].astype(str).str.contains("Points for Objectives", case=False, na=False)
-    max_row = raw[mask].iloc[0]
+    raw_full = pd.read_excel(f, header=1)
+    if str(raw_full.iloc[0, 0]).strip().lower() != "points for objectives":
+        desc_row = raw_full.iloc[0]
+        max_row = raw_full.iloc[1]
+    else:
+        desc_row = None
+        max_row = raw_full.iloc[0]
     obj_names = [c for c in df.columns if c not in ['Student Name', 'Obtained', 'Pct']]
     obj_max = {}
+    obj_desc = {}
     for c in obj_names:
         try:
             mx = float(max_row[c])
         except:
             mx = 0
         obj_max[c] = mx
-    return meta, df, obj_names, obj_max
+        if desc_row is not None:
+            d = str(desc_row[c]).strip()
+            if d == '' or d.lower() == 'nan':
+                d = str(c)
+        else:
+            d = str(c)
+        obj_desc[c] = d
+    return meta, df, obj_names, obj_max, obj_desc
 
 # =========================================================
 # PAGES
@@ -288,8 +301,8 @@ elif page == "👨‍🎓 Student Analysis":
         total_max = sum(obj_max)
         st.info(f"📋 Auto Total Max Mark = **{total_max}**")
         st.markdown("### 📚 Objectives")
-        for i, c in enumerate(obj_names, 1):
-            st.markdown(f"{i}. **{c}** – {obj_desc.get(c, c)}")
+        for i, obj in enumerate(obj_names, 1):
+            st.markdown(f"{i}. **{obj}** – {obj_desc.get(obj, obj)}")
         errors = []
         for _, row in student_df.iterrows():
             if row['Absent']: continue
@@ -385,7 +398,7 @@ elif page == "📚 Grade Analysis":
         for i, m in enumerate(metas):
             st.markdown(f"**File {i + 1} ({m.get('Assessment name', 'N/A')}):** 👩‍🏫 {m.get('Teacher Name', 'N/A')} | 🏫 {m.get('Class', 'N/A')} | 📅 {m.get('Date', 'N/A')} | 📚 {m.get('Subject', 'N/A')}")
             st.markdown("**📚 Objectives:**")
-            for c, d in descriptions[i].items() if False else descriptions[i].items():
+            for c, d in descriptions[i].items():
                 st.markdown(f"- **{c}** – {d}")
         st.markdown(f"### 📊 Comparing: **{' / '.join(names)}** | 📚 Subject: **{metas[0].get('Subject', 'N/A')}**")
         merged[pct_cols] = merged[pct_cols].fillna(0)
@@ -437,8 +450,9 @@ elif page == "📈 MAP Analysis":
                 st.error("❌ Missing columns: " + ", ".join(missing)); st.stop()
             map_df["Previous RIT"] = pd.to_numeric(map_df["Previous RIT"], errors="coerce")
             map_df["Current RIT"] = pd.to_numeric(map_df["Current RIT"], errors="coerce")
+            map_df_prev = map_df["Previous RIT"]
             map_df["Percentile"] = pd.to_numeric(map_df["Percentile"], errors="coerce")
-            map_df["RIT Growth"] = map_df["Current RIT"] - map_df["Previous RIT"]
+            map_df["RIT Growth"] = map_df["Current RIT"] - map_df_prev
             map_df["Growth Status"] = map_df["RIT Growth"].apply(lambda x: "Growth" if x > 0 else "Decay" if x < 0 else "Same")
             map_df["Support Level"] = map_df["Percentile"].apply(lambda x: "Intervention" if x < 25 else "Monitor" if x < 50 else "On Track" if x < 75 else "Enrichment")
             st.subheader("📋 MAP Data Preview")
@@ -539,8 +553,8 @@ elif page == "📑 Reports":
             st.subheader("📚 By Assessment Objectives")
             st.info(
                 "Select number of sections, then upload one Student Analysis "
-                "Excel file per section. Comparison bands: Below 60%, 60-75%, "
-                "76-85%, 86-100% (Outstanding)."
+                "Excel file per section. Bands: Below 60% (Weak), 60-75% (Acceptable), "
+                "76-85% (Very Good), 86-100% (Excellent)."
             )
             n_sec = st.number_input("Number of sections", min_value=2, max_value=10, value=2, step=1, key="nsec")
             sec_files = []
@@ -549,26 +563,28 @@ elif page == "📑 Reports":
 
             if all(sec_files):
                 sections_data = []
+                all_obj_desc = {}
                 for idx, f in enumerate(sec_files, 1):
-                    meta, df, obj_names, obj_max = read_section_file(f)
+                    meta, df, obj_names, obj_max, obj_desc = read_section_file(f)
                     if meta is None:
                         st.error(f"❌ Section {idx} file invalid"); st.stop()
-                    sec_name = "Section " + str(idx)
+                    sec_name = f"Section {idx}"
                     st.markdown(f"### 📋 Section {idx} Info")
                     m1, m2, m3, m4 = st.columns(4)
                     m1.markdown(f"**👩‍🏫 Teacher:** {meta.get('Teacher Name', 'N/A')}")
                     m2.markdown(f"**🏫 Class:** {meta.get('Class', 'N/A')}")
                     m3.markdown(f"**📅 Date:** {meta.get('Date', 'N/A')}")
                     m4.markdown(f"**📝 Assessment:** {meta.get('Assessment name', 'N/A')}")
-                    st.markdown(f"**📚 Subject:** {meta.get('Subject', 'N/A')}")
-                    st.dataframe(df, use_container_width=True)
+                    st.markdown(f"**📚 Subject:** {meta.get('Subject', 'N/A')}  |  **🏷️ Section:** {sec_name}")
+                    for k, v in obj_desc.items():
+                        all_obj_desc[k] = v
 
                     def band(p):
-                        if pd.isna(p): return "Below 60%"
-                        if p < 60: return "Below 60%"
-                        elif p <= 75: return "60-75%"
-                        elif p <= 85: return "76-85%"
-                        else: return "86-100% (Outstanding)"
+                        if pd.isna(p): return "Below 60% (Weak)"
+                        if p < 60: return "Below 60% (Weak)"
+                        elif p <= 75: return "60-75% (Acceptable)"
+                        elif p <= 85: return "76-85% (Very Good)"
+                        else: return "86-100% (Excellent)"
                     df['Band'] = df['Pct'].apply(band)
                     obj_avg = {}
                     for c in obj_names:
@@ -585,7 +601,7 @@ elif page == "📑 Reports":
                         'obj_names': obj_names
                     })
 
-                band_order = ["Below 60%", "60-75%", "76-85%", "86-100% (Outstanding)"]
+                band_order = ["Below 60% (Weak)", "60-75% (Acceptable)", "76-85% (Very Good)", "86-100% (Excellent)"]
                 band_df = pd.DataFrame()
                 for sd in sections_data:
                     temp = sd['bands'].reindex(band_order).fillna(0).astype(int)
@@ -597,18 +613,31 @@ elif page == "📑 Reports":
                 plot_df.columns = ['Section', 'Band', 'Count']
 
                 st.subheader("📊 Band Distribution per Section")
-                v1, v2 = st.columns(2)
-                with v1:
-                    st.plotly_chart(
-                        px.bar(plot_df, x='Band', y='Count', color='Section', barmode='group', text='Count'),
-                        use_container_width=True
-                    )
-                with v2:
-                    overall = band_df.sum().reindex(band_order)
-                    st.plotly_chart(
-                        px.pie(names=band_order, values=overall.values, hole=0.3, color_discrete_sequence=px.colors.qualitative.Safe),
-                        use_container_width=True
-                    )
+                st.plotly_chart(
+                    px.bar(plot_df, x='Band', y='Count', color='Section', barmode='group', text='Count'),
+                    use_container_width=True
+                )
+
+                st.subheader("📈 Dumbbell Chart (Section gap per Band)")
+                fig = go.Figure()
+                for sec in band_df.index:
+                    fig.add_trace(go.Scatter(
+                        x=band_df.loc[sec],
+                        y=band_order,
+                        mode='markers',
+                        name=sec,
+                        marker=dict(size=14)
+                    ))
+                for band in band_order:
+                    fig.add_trace(go.Scatter(
+                        x=band_df[band].values,
+                        y=[band]*len(band_df),
+                        mode='lines',
+                        line=dict(color='lightgray', width=2),
+                        showlegend=False
+                    ))
+                fig.update_layout(xaxis_title="Student Count", yaxis_title="Performance Band", height=400)
+                st.plotly_chart(fig, use_container_width=True)
 
                 st.subheader("🏆 Section Order per Objective (Rank 1 = Highest Average %)")
                 rank_rows = []
@@ -620,6 +649,11 @@ elif page == "📑 Reports":
                     for i, (sname, val) in enumerate(sorted_secs, 1):
                         row[f"Rank {i}"] = f"{sname} ({val:.1f}%)"
                     rank_rows.append(row)
-                st.dataframe(pd.DataFrame(rank_rows), use_container_width=True)
+                help_text = "Objective descriptions:\n" + "\n".join([f"• {k}: {v}" for k, v in all_obj_desc.items()])
+                st.dataframe(
+                    pd.DataFrame(rank_rows),
+                    use_container_width=True,
+                    column_config={"Objective": column_config.Column("Objective", help=help_text)}
+                )
 
                 st.success("✅ Comparison complete. Other comparison types coming next!")
