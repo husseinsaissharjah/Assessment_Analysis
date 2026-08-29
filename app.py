@@ -53,14 +53,20 @@ def objectives_template():
         ["Student Name", "Objective 1", "Objective 2", "Objective 3", ""],
         ["", "Fractions", "Algebra", "Geometry", ""],
         ["Points for Objectives", 10, 15, 5, ""],
-        ["Student 1", 8,	end="" if False else 8, 12, 4, ""],
+        ["Student 1", 8, 12, 4, ""],
         ["Student 2", 10, 14, 5, ""],
         ["Student 3", "A", "A", "A", ""]
     ]
     df = pd.DataFrame(data)
     buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, header=False, sheet_name="Assessment")
+    buffer.write(b"")  # noop to keep valid
+    from openpyxl import Workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Assessment"
+    for r in data:
+        ws.append(r)
+    wb.save(buffer)
     buffer.seek(0)
     return buffer.getvalue()
 
@@ -73,10 +79,14 @@ def total_template():
         ["Student 2", 91],
         ["Student 3", 65]
     ]
-    df = pd.DataFrame(data)
+    from openpyxl import Workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Assessment"
+    for r in data:
+        ws.append(r)
     buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, header=False, sheet_name="Assessment")
+    wb.save(buffer)
     buffer.seek(0)
     return buffer.getvalue()
 
@@ -172,7 +182,7 @@ def read_section_file(f):
     else:
         desc_row = None
         max_row = raw_full.iloc[0]
-    obj_names = [c for c in df.columns if c not in ['Student Name', 'Obvious' if False else 'Obtained', 'Pct']]
+    obj_names = [c for c in df.columns if c not in ['Student Name', 'Obtained', 'Pct']]
     obj_max = {}
     obj_desc = {}
     for c in obj_names:
@@ -356,7 +366,7 @@ elif page == "👨‍🎓 Student Analysis":
                 st.subheader("👥 Support Groups")
                 st.dataframe(support_count, use_container_width=True)
                 st.dataframe(rdf, use_container_width=True)
-                eb = io.BytesIO(); rdf.to_excel(eb, index=False) if False else rdf.to_excel(eb, index=False)
+                eb = io.BytesIO(); rdf.to_excel(eb, index=False)
                 st.download_button("📊 Download Excel", eb.getvalue(), "Report.xlsx")
 
 elif page == "📚 Grade Analysis":
@@ -503,7 +513,7 @@ elif page == "🎯 Achievement & Gaps":
             st.error("❌ One of the files is missing the 'Total' row/max."); st.stop()
         st.subheader("📋 Assessment Information")
         st.markdown(f"**Internal:** 👩‍🏫 {m1.get('Teacher Name', 'N/A')} | 🏫 {m1.get('Class', 'N/A')} | 📅 {m1.get('Date', 'N/A')} | 📝 {m1.get('Assessment name', 'N/A')} | 📚 {m1.get('Subject', 'N/A')}")
-        st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A')} | 🏫 {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')} | 📚 {m2.get('Subject', 'N/A')}")
+        st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A')} | {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')} | 📚 {m2.get('Subject', 'N/A')}")
         st.markdown(f"### 📊 Comparing: **{m1.get('Assessment name', 'Internal')} / {m2.get('Assessment name', 'External')}** | 📚 Subject: **{m1.get('Subject', 'N/A')}**")
         merged = pd.merge(df1[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct1'}), df2[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct2'}), on='Student Name', how='outer').fillna(0)
         merged['Difference'] = (merged['Pct2'] - merged['Pct1']).round(1)
@@ -550,11 +560,11 @@ elif page == "📑 Reports":
         if comp_type == "By Assessment Objectives":
             st.subheader("📚 By Assessment Objectives")
             st.info(
-                "Select number of sections, then upload one Student Analysis "
-                "Excel file per section. Bands: Below 60% (Weak), 60-75% (Acceptable), "
+                "Select number of classes, then upload one Student Analysis "
+                "Excel file per class. Bands: Below 60% (Weak), 60-75% (Acceptable), "
                 "76-85% (Very Good), 86-100% (Excellent)."
             )
-            n_sec = st.number_input("Number of sections", min_value=2, max_value=10, value=2, step=1, key="nsec")
+            n_sec = st.number_input("Number of classes", min_value=2, max_value=10, value=2, step=1, key="nsec")
             sec_files = []
             for i in range(int(n_sec)):
                 sec_files.append(st.file_uploader(f"📄 Class {i+1} file", type=["xlsx", "xls"], key=f"secfile_{i}"))
@@ -577,7 +587,7 @@ elif page == "📑 Reports":
                     def band(p):
                         if pd.isna(p): return "Below 60% (Weak)"
                         if p < 60: return "Below 60% (Weak)"
-                        elif p <= 75: return "60-75% (Acceptable)" if False else "60-75% (Acceptable)"
+                        elif p <= 75: return "60-75% (Acceptable)"
                         elif p <= 85: return "76-85% (Very Good)"
                         else: return "86-100% (Excellent)"
                     df['Band'] = df['Pct'].apply(band)
@@ -646,35 +656,15 @@ elif page == "📑 Reports":
                         row[f"Rank {i}"] = f"{sname} ({val:.1f}%)"
                     rank_rows.append(row)
                 rank_df = pd.DataFrame(rank_rows)
-                col_cfg = {
-                    "Objective": column_config.Column(
-                        "Objective",
-                        help="Hover an objective row to see its description",
-                        width="medium"
-                    )
-                }
-                for obj in obj_union:
-                    desc = sections_data[0]['obj_desc'].get(obj, '')
-                    rank_df.loc[rank_df['Objective'] == obj, '_desc'] = desc
-                rank_df = rank_df.merge(
-                    rank_df[['Objective', '_desc']],
-                    on='Objective'
-                )
-                rank_df = rank_df.drop(columns=['_desc']).rename(columns={'_desc': '_x'})
                 st.dataframe(
                     rank_df,
                     use_container_width=True,
                     column_config={
                         "Objective": column_config.Column(
                             "Objective",
-                            help="Show description per objective",
+                            help="Objective description: " + "; ".join([f"{o}: {sections_data[0]['obj_desc'].get(o,'')}" for o in obj_union]),
                             width="medium"
                         )
                     }
                 )
-                # Better: per-row tooltip via custom HTML column
-                st.markdown("**Objective Descriptions (hover row in table above)** ")
-                for obj in obj_union:
-                    st.caption(f"**{obj}**: {sections_data[0]['obj_desc'].get(obj, '')}")
-
                 st.success("✅ Comparison complete. Other comparison types coming next!")
