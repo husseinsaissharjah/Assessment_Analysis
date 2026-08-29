@@ -127,7 +127,7 @@ def read_objectives_file(f):
             k, v = val.split(':', 1)
             meta[k.strip()] = v.strip()
     df = pd.read_excel(f, header=1)
-    if str(df.iloc[0, 0]).strip().lower() != "points for objectives":
+    if str(df.iloc[0, 0]).strip().lower().strip() != "points for objectives":
         df = df.iloc[1:].reset_index(drop=True)
     mask = df.iloc[:, 0].astype(str).str.contains("Points for Objectives", case=False, na=False)
     if not mask.any():
@@ -137,7 +137,7 @@ def read_objectives_file(f):
     valid_cols = []
     total_max = 0.0
     for c in raw_obj_cols:
-        hdr = str(.join([]) if False else c).strip()
+        hdr = str(c).strip()
         mx_raw = max_row[c]
         mx_str = str(mx_raw).strip()
         if hdr != '' and hdr.lower() != 'nan' and not hdr.startswith('Unnamed') and mx_str != '' and mx_str.lower() != 'nan':
@@ -248,6 +248,7 @@ def read_section_file(f):
             if d == '' or d.lower() == 'nan':
                 d = str(c)
         else:
+            d = None
             d = str(c)
         obj_desc[c] = d
     return meta, df, obj_names, obj_max, obj_desc
@@ -343,7 +344,7 @@ elif page == "📝 Objective Analysis":
             mx_raw = max_row[c]
             mx_str = str(mx_raw).strip()
             if hdr != '' and hdr.lower() != 'nan' and not hdr.startswith('Unnamed') and mx_str != '' and mx_str.lower() != 'nan':
-                try: mx = float(mx_raw)
+                try: mx = float(mx_raw) if False else float(mx_raw)
                 except: mx = 0.0
                 if mx > 0:
                     obj_names.append(c); obj_max.append(mx)
@@ -501,7 +502,7 @@ elif page == "📈 Class Total Average Analysis":
 elif page == "🗺️ MAP Analysis":
     st.title("🗺️ MAP Analysis")
     st.info("### What is a RIT Score?\nThe RIT score is the scale used by MAP Growth to measure student achievement and instructional level.")
-    st.markdown("### What this analysis does\n- Calculates RIT growth.\n- Identifies Growth, Decay, or Same performance.\n- Shows student percentile.\n- Calculates grade average RIT.\n- Identifies students below the selected percentile.\n- Identifies students requiring intervention or enrichment.")
+    st.markdown("### What this does\n- Calculates RIT growth.\n- Identifies Growth, Decay, or Same performance.\n- Shows student percentile.\n- Calculates grade average RIT.\n- Identifies students below the selected percentile.\n- Identifies students requiring intervention or enrichment.")
     st.download_button("📥 Download MAP Excel Template", map_template(), "MAP_Analysis_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     st.markdown("---")
     map_file = st.file_uploader("📄 Upload MAP Data Excel", type=["xlsx", "xls"], key="map")
