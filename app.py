@@ -57,15 +57,13 @@ def objectives_template():
         ["Student 2", 10, 14, 5, ""],
         ["Student 3", "A", "A", "A", ""]
     ]
-    df = pd.DataFrame(data)
-    buffer = io.BytesIO()
-    buffer.write(b"")  # noop to keep valid
     from openpyxl import Workbook
     wb = Workbook()
     ws = wb.active
     ws.title = "Assessment"
     for r in data:
         ws.append(r)
+    buffer = io.BytesIO()
     wb.save(buffer)
     buffer.seek(0)
     return buffer.getvalue()
@@ -157,7 +155,8 @@ def read_total_file(f):
     if total_idx is None:
         return None, None
     try: max_total = float(raw.iloc[total_idx, 1])
-    except: max_total = 100.0
+    except: max_total = None
+    if max_total is None: max_total = 100.0
     data = raw.iloc[2:, :].copy()
     data.columns = headers
     data = data[data.iloc[:, 0].astype(str).str.lower().str.contains('total') == False]
@@ -426,7 +425,7 @@ elif page == "📚 Grade Analysis":
         v1, v2 = st.columns(2)
         with v1:
             st.markdown("**Bar Chart**")
-            st.plotly_chart(px.bar(cd, x='Status', y='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}), use_container_width=True)
+            st.plotly_chart(px.bar(cd, x='Status', y='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay' if False else 'Decay': 'red', 'Same': 'yellow'}), use_container_width=True)
         with v2:
             st.markdown("**Pie Chart**")
             pf = px.pie(cd, names='Status', values='Count', color='Status', color_discrete_map={'Growth': 'green', 'Decay': 'red', 'Same': 'yellow'}, hole=0.3)
@@ -513,7 +512,7 @@ elif page == "🎯 Achievement & Gaps":
             st.error("❌ One of the files is missing the 'Total' row/max."); st.stop()
         st.subheader("📋 Assessment Information")
         st.markdown(f"**Internal:** 👩‍🏫 {m1.get('Teacher Name', 'N/A')} | 🏫 {m1.get('Class', 'N/A')} | 📅 {m1.get('Date', 'N/A')} | 📝 {m1.get('Assessment name', 'N/A')} | 📚 {m1.get('Subject', 'N/A')}")
-        st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A')} | {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')} | 📚 {m2.get('Subject', 'N/A')}")
+        st.markdown(f"**External:** 👩‍🏫 {m2.get('Teacher Name', 'N/A')} | 🏫 {m2.get('Class', 'N/A')} | 📅 {m2.get('Date', 'N/A')} | 📝 {m2.get('Assessment name', 'N/A')} | 📚 {m2.get('Subject', 'N/A')}")
         st.markdown(f"### 📊 Comparing: **{m1.get('Assessment name', 'Internal')} / {m2.get('Assessment name', 'External')}** | 📚 Subject: **{m1.get('Subject', 'N/A')}**")
         merged = pd.merge(df1[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct1'}), df2[['Student Name', 'Pct']].rename(columns={'Pct': 'Pct2'}), on='Student Name', how='outer').fillna(0)
         merged['Difference'] = (merged['Pct2'] - merged['Pct1']).round(1)
@@ -583,6 +582,9 @@ elif page == "📑 Reports":
                     m3.markdown(f"**📅 Date:** {meta.get('Date', 'N/A')}")
                     m4.markdown(f"**📝 Assessment:** {meta.get('Assessment name', 'N/A')}")
                     st.markdown(f"**📚 Subject:** {meta.get('Subject', 'N/A')}")
+                    st.markdown("**📚 Objectives:**")
+                    for c in obj_names:
+                        st.markdown(f"- **{c}** – {obj_desc.get(c, c)}")
 
                     def band(p):
                         if pd.isna(p): return "Below 60% (Weak)"
@@ -651,20 +653,13 @@ elif page == "📑 Reports":
                 for obj in obj_union:
                     avgs = {sd['name']: sd['obj_avg'].get(obj, 0) for sd in sections_data}
                     sorted_secs = sorted(avgs.items(), key=lambda x: x[1], reverse=True)
-                    row = {'Objective': obj}
+                    row = {
+                        'Objective': obj,
+                        'Description': sections_data[0]['obj_desc'].get(obj, '')
+                    }
                     for i, (sname, val) in enumerate(sorted_secs, 1):
                         row[f"Rank {i}"] = f"{sname} ({val:.1f}%)"
                     rank_rows.append(row)
                 rank_df = pd.DataFrame(rank_rows)
-                st.dataframe(
-                    rank_df,
-                    use_container_width=True,
-                    column_config={
-                        "Objective": column_config.Column(
-                            "Objective",
-                            help="Objective description: " + "; ".join([f"{o}: {sections_data[0]['obj_desc'].get(o,'')}" for o in obj_union]),
-                            width="medium"
-                        )
-                    }
-                )
+                st.dataframe(rank_df, use_container_width=True)
                 st.success("✅ Comparison complete. Other comparison types coming next!")
