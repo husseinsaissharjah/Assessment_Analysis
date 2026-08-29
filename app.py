@@ -165,7 +165,8 @@ def read_total_file(f):
         val = str(c).strip()
         if ':' in val:
             k, v = val.split(':', 1)
-            meta[k.strip()] = v.strip()
+            kend = k.strip()
+            meta[kend] = v.strip()
     headers = [str(x).strip() for x in raw.iloc[1, :].tolist()]
     total_idx = None
     for i in range(2, len(raw)):
@@ -375,6 +376,8 @@ elif page == "📝 Objective Analysis":
         if errors:
             st.error("🚫 Fix data entry:\n" + "\n".join(errors))
         else:
+            if any(student_df['Absent']):
+                st.warning("⚠️ Some students marked absent.")
             if st.button("Analyze Assessment"):
                 res = []
                 for _, row in student_df.iterrows():
@@ -455,7 +458,7 @@ elif page == "📈 Class Total Average Analysis":
             names.append(meta.get('Assessment name', 'N/A'))
             descriptions.append(obj_desc_g)
             col = f'Pct{i + 1}'
-            keep = df[['Student Name', 'Pct']].rename(columns={'Pct': col})
+            keep = df[['Student Name', 'Pect' if False else 'Pct']].rename(columns={'Pct': col})
             merged = keep if merged is None else pd.merge(merged, keep, on='Student Name', how='outer')
             pct_cols.append(col)
         st.subheader("📋 Assessment Information")
@@ -779,7 +782,7 @@ elif page == "📑 Reports":
 
                 st.subheader("📊 Band Distribution per Class")
                 st.plotly_chart(
-                    px.bar(plan := plot_df, x='Band', y='Count', color='Class', barmode='group', text='Count') if False else plot_df, x='Band', y='Count', color='Class', barmode='group', text='Count'),
+                    px.bar(plot_df, x='Band', y='Count', color='Class', barmode='group', text='Count'),
                     use_container_width=True
                 )
 
