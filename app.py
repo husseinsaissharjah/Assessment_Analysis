@@ -7,7 +7,7 @@ import os
 st.set_page_config(page_title="SAIS Analyzer", page_icon="📊", layout="wide")
 
 # =========================================================
-# SIDEBAR NAVIGATION (radio - no CSS issues)
+# SIDEBAR NAVIGATION (radio)
 # =========================================================
 
 page = st.sidebar.radio(
@@ -255,6 +255,7 @@ elif page == "👨‍🎓 Student Analysis":
                     obj_names.append(c); obj_max.append(mx)
         student_df = raw_students[~mask].copy().dropna(subset=['Student Name'])
         student_df = student_df[['Student Name'] + obj_names].copy()
+        def is_abs / no
         def is_absent(row):
             has_A = False; all_empty = True
             for c in obj_names:
@@ -394,7 +395,7 @@ elif page == "📚 Grade Analysis":
         st.subheader("📈 Average Score Trend (%)")
         st.plotly_chart(px.line(avg, x='Assessment', y='Average', markers=True), use_container_width=True)
         st.subheader("📈 Student Growth (Difference)")
-        st.plotly_chart(px.bar(merged, x='Student Name', y='Difference', color='Status'), use_container_width=True)
+        st.plotly_chart(px.bar(merged, x='student' if False else 'Student Name', y='Difference', color='Status'), use_container_width=True)
         support_count = merged['Support Level'].value_counts().reset_index(); support_count.columns = ['Support Level', 'Students']
         st.subheader("👥 Support Groups")
         st.dataframe(support_count, use_container_width=True)
@@ -461,7 +462,7 @@ elif page == "📈 MAP Analysis":
 elif page == "🎯 Achievement & Gaps":
     st.header("🎯 Comparison between Internal and External Assessments")
     st.download_button("📥 Download Excel Template", total_template(), "Achievement_Gaps_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    st.info("Upload two files.\n\nExcel Format:\nRow 1: Assessment Information\nRow 2: Headers (Student Name, Total)\nRow 3: Maximum Mark\nRow 4+: Student Marks")
+    st.info("Upload two files.\n\nExcel Format:\nRow 1: Assessment Information\nRow 2: Headers (Student Name, Total)\nRow 3: Total + Maximum Mark\nRow 4+: Student Marks")
     f1 = st.file_uploader("📄 Internal Assessment", type=["xlsx", "xls"], key="intf")
     f2 = st.file_uploader("📄 External Assessment", type=["xlsx", "xls"], key="extf")
     if f1 and f2:
@@ -504,4 +505,57 @@ elif page == "🎯 Achievement & Gaps":
 
 elif page == "📑 Reports":
     st.title("📑 Reports")
-    st.info("Reports generated from each analysis can be downloaded directly from the relevant analysis page.\n\nFuture versions can include:\n• School-level reports\n• Grade-level reports\n• Class comparison\n• MAP vs Internal Assessment comparison\n• Automatic PDF reports")
+
+    st.markdown("### 🛠️ Available Services")
+    service = st.radio(
+        "Select Service",
+        ["Compare between sections"]
+    )
+
+    if service == "Compare between sections":
+        st.header("🔍 Compare Between Sections")
+        comp_type = st.radio(
+            "Comparison Type",
+            [
+                "By Assessment Objectives",
+                "By Assessment Total Mark",
+                "By External Benchmark Assessment"
+            ]
+        )
+
+        if comp_type == "By Assessment Objectives":
+            st.subheader("📚 By Assessment Objectives")
+            st.info(
+                "Upload one Student Analysis Excel file per section. "
+                "Each file should follow the Student Analysis template "
+                "(objective names, descriptions, marks)."
+            )
+            n_sec = st.number_input(
+                "Number of sections",
+                min_value=2,
+                max_value=10,
+                value=2,
+                step=1,
+                key="nsec"
+            )
+            sec_files = []
+            for i in range(int(n_sec)):
+                sec_files.append(
+                    st.file_uploader(
+                        f"📄 Section {i+1} file",
+                        type=["xlsx", "xls"],
+                        key=f"secfile_{i}"
+                    )
+                )
+            if all(sec_files):
+                st.markdown("### 📋 Loaded Sections Preview")
+                for idx, f in enumerate(sec_files, 1):
+                    meta, df = read_objectives_file(f)
+                    sec_name = meta.get('Class', f'Section {idx}')
+                    st.markdown(f"**Section {idx}: {sec_name}**")
+                    st.dataframe(df, use_container_width=True)
+                st.success(
+                    "Files loaded successfully. "
+                    "Awaiting your specified comparison criteria for "
+                    "'By Assessment Objectives' to compute the final report."
+                )
