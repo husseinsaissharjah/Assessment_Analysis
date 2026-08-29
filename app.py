@@ -127,7 +127,7 @@ def read_objectives_file(f):
             k, v = val.split(':', 1)
             meta[k.strip()] = v.strip()
     df = pd.read_excel(f, header=1)
-    if str(df.iloc[0, 0]).strip().lower().strip() != "points for objectives":
+    if str(df.iloc[0, 0]).strip().lower() != "points for objectives":
         df = df.iloc[1:].reset_index(drop=True)
     mask = df.iloc[:, 0].astype(str).str.contains("Points for Objectives", case=False, na=False)
     if not mask.any():
@@ -248,7 +248,6 @@ def read_section_file(f):
             if d == '' or d.lower() == 'nan':
                 d = str(c)
         else:
-            d = None
             d = str(c)
         obj_desc[c] = d
     return meta, df, obj_names, obj_max, obj_desc
@@ -344,7 +343,7 @@ elif page == "📝 Objective Analysis":
             mx_raw = max_row[c]
             mx_str = str(mx_raw).strip()
             if hdr != '' and hdr.lower() != 'nan' and not hdr.startswith('Unnamed') and mx_str != '' and mx_str.lower() != 'nan':
-                try: mx = float(mx_raw) if False else float(mx_raw)
+                try: mx = float(mx_raw)
                 except: mx = 0.0
                 if mx > 0:
                     obj_names.append(c); obj_max.append(mx)
@@ -780,7 +779,7 @@ elif page == "📑 Reports":
 
                 st.subheader("📊 Band Distribution per Class")
                 st.plotly_chart(
-                    px.bar(plot_df, x='Band', y='Count', color='Class', barmode='group', text='Count'),
+                    px.bar(plan := plot_df, x='Band', y='Count', color='Class', barmode='group', text='Count') if False else plot_df, x='Band', y='Count', color='Class', barmode='group', text='Count'),
                     use_container_width=True
                 )
 
@@ -805,3 +804,88 @@ elif page == "📑 Reports":
                 fig.update_layout(xaxis_title="Student Count", yaxis_title="Performance Band", height=400)
                 st.plotly_chart(fig, use_container_width=True)
                 st.success("✅ Total Mark comparison complete.")
+
+        elif comp_type == "By External Benchmark Assessment":
+            st.subheader("🏢 By External Benchmark Assessment")
+            st.info(
+                "Upload External Benchmark (objectives or total) sheets per class. "
+                "All will be converted to percentage. Bands: Below 60% (Weak), 60-75% (Acceptable), "
+                "76-85% (Very Good), 86-100% (Excellent)."
+            )
+            n_sec = st.number_input("Number of classes", min_value=2, max_value=10, value=2, step=1, key="nsec_ext")
+            sec_files = []
+            for i in range(int(n_sec)):
+                sec_files.append(st.file_uploader(f"📄 Class {i+1} file", type=["xlsx", "xls"], key=f"extfile_{i}"))
+
+            if all(sec_files):
+                sections_data = []
+                for idx, f in enumerate(sec_files, 1):
+                    f.seek(0)
+                    raw_check = pd.read_excel(f, header=1)
+                    has_total_row = raw_check.iloc[:, 0].astype(str).str.contains("Points for Objectives", case=False, na=False).any()
+                    if has_total_row:
+                        meta, df = read_objectives_file(f)
+                    else:
+                        meta, df = read_total_file(f)
+                    if meta is None:
+                        st.error(f"❌ Class {idx} file invalid (no Pct or Total)"); st.stop()
+                    class_name = meta.get('Class', f'Class {idx}')
+                    st.markdown(f"### 📋 Class {idx} Info")
+                    m1, m2, m3, m4 = st.columns(4)
+                    m1.markdown(f"**👩‍🏫 Teacher:** {meta.get('Teacher Name', 'N/A')}")
+                    m2.markdown(f"**🏫 Class:** {class_name}")
+                    m3.markdown(f"**📅 Date:** {meta.get('Date', 'N/A')}")
+                    m4.markdown(f"**📝 Assessment:** {meta.get('Assessment name', 'N/A')}")
+                    st.markdown(f"**📚 Subject:** {meta.get('Subject', 'N/A')}")
+
+                    def band(p):
+                        if pd.isna(p): return "Below 60% (Weak)"
+                        if p < 60: return "Below 60% (Weak)"
+                        elif p <= 75: return "60-75% (Acceptable)"
+                        elif p <= 85: return "76-85% (Very Good)"
+                        else: return "86-100% (Excellent)"
+                    df['Band'] = df['Pct'].apply(band)
+                    sections_data.append({
+                        'name': class_name,
+                        'df': df,
+                        'bands': df['Band'].value_counts()
+                    })
+
+                band_order = ["Below 60% (Weak)", "60-75% (Acceptable)", "76-85% (Very Good)", "86-100% (Excellent)"]
+                band_df = pd.DataFrame()
+                for sd in sections_data:
+                    temp = sd['bands'].reindex(band_order).fillna(0).astype(int)
+                    temp.name = sd['name']
+                    band_df = pd.concat([band_df, temp.to_frame().T], axis=0)
+                band_df = band_df[band_order]
+
+                plot_df = band_df.reset_index().melt(id_vars='index', value_vars=band_order)
+                plot_df.columns = ['Class', 'Band', 'Count']
+
+                st.subheader("📊 Band Distribution per Class")
+                st.plotly_chart(
+                    px.bar(plot_df, x='Band', y='Count', color='Class', barmode='group', text='Count'),
+                    use_container_width=True
+                )
+
+                st.subheader("📈 Dumbbell Chart (Class gap per Band)")
+                fig = go.Figure()
+                for sec in band_df.index:
+                    fig.add_trace(go.Scatter(
+                        x=band_df.loc[sec],
+                        y=band_order,
+                        mode='markers',
+                        name=sec,
+                        marker=dict(size=14)
+                    ))
+                for band in band_order:
+                    fig.add_trace(go.Scatter(
+                        x=band_df[band].values,
+                        y=[band]*len(band_df),
+                        mode='lines',
+                        line=dict(color='lightgray', width=2),
+                        showlegend=False
+                    ))
+                fig.update_layout(xaxis_title="Student Count", yaxis_title="Performance Band", height=400)
+                st.plotly_chart(fig, use_container_width=True)
+                st.success("✅ External Benchmark comparison complete.")
