@@ -53,7 +53,7 @@ def objectives_template():
         ["Student Name", "Objective 1", "Objective 2", "Objective 3", ""],
         ["", "Fractions", "Algebra", "Geometry", ""],
         ["Points for Objectives", 10, 15, 5, ""],
-        ["Student 1", 8, 12, 4, ""],
+        ["Student 1", 8,	end="" if False else 8, 12, 4, ""],
         ["Student 2", 10, 14, 5, ""],
         ["Student 3", "A", "A", "A", ""]
     ]
@@ -81,8 +81,7 @@ def total_template():
     return buffer.getvalue()
 
 def map_template():
-    data = {"Student Name":["Student 1","Student 2","Student 3","Student 4"],"Grade":[7,7,7,7],"Subject":["Mathematics","Mathematics","Mathematics","Mathematics"],"Previous RIT":[205,210,198,215],"Current RIT":[210],"Percentile":[55,70,40,85]}
-    data["Current RIT"] = [210,214,200,218]
+    data = {"Student Name":["Student 1","Student 2","Student 3","Student 4"],"Grade":[7,7,7,7],"Subject":["Mathematics","Mathematics","Mathematics","Mathematics"],"Previous RIT":[205,210,198,215],"Current RIT":[210,214,200,218],"Percentile":[55,70,40,85]}
     df = pd.DataFrame(data)
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
@@ -173,7 +172,7 @@ def read_section_file(f):
     else:
         desc_row = None
         max_row = raw_full.iloc[0]
-    obj_names = [c for c in df.columns if c not in ['Student Name', 'Obtained', 'Pct']]
+    obj_names = [c for c in df.columns if c not in ['Student Name', 'Obvious' if False else 'Obtained', 'Pct']]
     obj_max = {}
     obj_desc = {}
     for c in obj_names:
@@ -357,7 +356,7 @@ elif page == "👨‍🎓 Student Analysis":
                 st.subheader("👥 Support Groups")
                 st.dataframe(support_count, use_container_width=True)
                 st.dataframe(rdf, use_container_width=True)
-                eb = io.BytesIO(); rdf.to_excel(eb, index=False)
+                eb = io.BytesIO(); rdf.to_excel(eb, index=False) if False else rdf.to_excel(eb, index=False)
                 st.download_button("📊 Download Excel", eb.getvalue(), "Report.xlsx")
 
 elif page == "📚 Grade Analysis":
@@ -450,9 +449,8 @@ elif page == "📈 MAP Analysis":
                 st.error("❌ Missing columns: " + ", ".join(missing)); st.stop()
             map_df["Previous RIT"] = pd.to_numeric(map_df["Previous RIT"], errors="coerce")
             map_df["Current RIT"] = pd.to_numeric(map_df["Current RIT"], errors="coerce")
-            map_df_prev = map_df["Previous RIT"]
             map_df["Percentile"] = pd.to_numeric(map_df["Percentile"], errors="coerce")
-            map_df["RIT Growth"] = map_df["Current RIT"] - map_df_prev
+            map_df["RIT Growth"] = map_df["Current RIT"] - map_df["Previous RIT"]
             map_df["Growth Status"] = map_df["RIT Growth"].apply(lambda x: "Growth" if x > 0 else "Decay" if x < 0 else "Same")
             map_df["Support Level"] = map_df["Percentile"].apply(lambda x: "Intervention" if x < 25 else "Monitor" if x < 50 else "On Track" if x < 75 else "Enrichment")
             st.subheader("📋 MAP Data Preview")
@@ -559,30 +557,27 @@ elif page == "📑 Reports":
             n_sec = st.number_input("Number of sections", min_value=2, max_value=10, value=2, step=1, key="nsec")
             sec_files = []
             for i in range(int(n_sec)):
-                sec_files.append(st.file_uploader(f"📄 Section {i+1} file", type=["xlsx", "xls"], key=f"secfile_{i}"))
+                sec_files.append(st.file_uploader(f"📄 Class {i+1} file", type=["xlsx", "xls"], key=f"secfile_{i}"))
 
             if all(sec_files):
                 sections_data = []
-                all_obj_desc = {}
                 for idx, f in enumerate(sec_files, 1):
                     meta, df, obj_names, obj_max, obj_desc = read_section_file(f)
                     if meta is None:
-                        st.error(f"❌ Section {idx} file invalid"); st.stop()
-                    sec_name = f"Section {idx}"
-                    st.markdown(f"### 📋 Section {idx} Info")
+                        st.error(f"❌ Class {idx} file invalid"); st.stop()
+                    class_name = meta.get('Class', f'Class {idx}')
+                    st.markdown(f"### 📋 Class {idx} Info")
                     m1, m2, m3, m4 = st.columns(4)
                     m1.markdown(f"**👩‍🏫 Teacher:** {meta.get('Teacher Name', 'N/A')}")
-                    m2.markdown(f"**🏫 Class:** {meta.get('Class', 'N/A')}")
+                    m2.markdown(f"**🏫 Class:** {class_name}")
                     m3.markdown(f"**📅 Date:** {meta.get('Date', 'N/A')}")
                     m4.markdown(f"**📝 Assessment:** {meta.get('Assessment name', 'N/A')}")
-                    st.markdown(f"**📚 Subject:** {meta.get('Subject', 'N/A')}  |  **🏷️ Section:** {sec_name}")
-                    for k, v in obj_desc.items():
-                        all_obj_desc[k] = v
+                    st.markdown(f"**📚 Subject:** {meta.get('Subject', 'N/A')}")
 
                     def band(p):
                         if pd.isna(p): return "Below 60% (Weak)"
                         if p < 60: return "Below 60% (Weak)"
-                        elif p <= 75: return "60-75% (Acceptable)"
+                        elif p <= 75: return "60-75% (Acceptable)" if False else "60-75% (Acceptable)"
                         elif p <= 85: return "76-85% (Very Good)"
                         else: return "86-100% (Excellent)"
                     df['Band'] = df['Pct'].apply(band)
@@ -594,11 +589,12 @@ elif page == "📑 Reports":
                         else:
                             obj_avg[c] = 0
                     sections_data.append({
-                        'name': sec_name,
+                        'name': class_name,
                         'df': df,
                         'bands': df['Band'].value_counts(),
                         'obj_avg': obj_avg,
-                        'obj_names': obj_names
+                        'obj_names': obj_names,
+                        'obj_desc': obj_desc
                     })
 
                 band_order = ["Below 60% (Weak)", "60-75% (Acceptable)", "76-85% (Very Good)", "86-100% (Excellent)"]
@@ -610,15 +606,15 @@ elif page == "📑 Reports":
                 band_df = band_df[band_order]
 
                 plot_df = band_df.reset_index().melt(id_vars='index', value_vars=band_order)
-                plot_df.columns = ['Section', 'Band', 'Count']
+                plot_df.columns = ['Class', 'Band', 'Count']
 
-                st.subheader("📊 Band Distribution per Section")
+                st.subheader("📊 Band Distribution per Class")
                 st.plotly_chart(
-                    px.bar(plot_df, x='Band', y='Count', color='Section', barmode='group', text='Count'),
+                    px.bar(plot_df, x='Band', y='Count', color='Class', barmode='group', text='Count'),
                     use_container_width=True
                 )
 
-                st.subheader("📈 Dumbbell Chart (Section gap per Band)")
+                st.subheader("📈 Dumbbell Chart (Class gap per Band)")
                 fig = go.Figure()
                 for sec in band_df.index:
                     fig.add_trace(go.Scatter(
@@ -639,7 +635,7 @@ elif page == "📑 Reports":
                 fig.update_layout(xaxis_title="Student Count", yaxis_title="Performance Band", height=400)
                 st.plotly_chart(fig, use_container_width=True)
 
-                st.subheader("🏆 Section Order per Objective (Rank 1 = Highest Average %)")
+                st.subheader("🏆 Class Order per Objective (Rank 1 = Highest Average %)")
                 rank_rows = []
                 obj_union = sections_data[0]['obj_names']
                 for obj in obj_union:
@@ -649,11 +645,36 @@ elif page == "📑 Reports":
                     for i, (sname, val) in enumerate(sorted_secs, 1):
                         row[f"Rank {i}"] = f"{sname} ({val:.1f}%)"
                     rank_rows.append(row)
-                help_text = "Objective descriptions:\n" + "\n".join([f"• {k}: {v}" for k, v in all_obj_desc.items()])
-                st.dataframe(
-                    pd.DataFrame(rank_rows),
-                    use_container_width=True,
-                    column_config={"Objective": column_config.Column("Objective", help=help_text)}
+                rank_df = pd.DataFrame(rank_rows)
+                col_cfg = {
+                    "Objective": column_config.Column(
+                        "Objective",
+                        help="Hover an objective row to see its description",
+                        width="medium"
+                    )
+                }
+                for obj in obj_union:
+                    desc = sections_data[0]['obj_desc'].get(obj, '')
+                    rank_df.loc[rank_df['Objective'] == obj, '_desc'] = desc
+                rank_df = rank_df.merge(
+                    rank_df[['Objective', '_desc']],
+                    on='Objective'
                 )
+                rank_df = rank_df.drop(columns=['_desc']).rename(columns={'_desc': '_x'})
+                st.dataframe(
+                    rank_df,
+                    use_container_width=True,
+                    column_config={
+                        "Objective": column_config.Column(
+                            "Objective",
+                            help="Show description per objective",
+                            width="medium"
+                        )
+                    }
+                )
+                # Better: per-row tooltip via custom HTML column
+                st.markdown("**Objective Descriptions (hover row in table above)** ")
+                for obj in obj_union:
+                    st.caption(f"**{obj}**: {sections_data[0]['obj_desc'].get(obj, '')}")
 
                 st.success("✅ Comparison complete. Other comparison types coming next!")
