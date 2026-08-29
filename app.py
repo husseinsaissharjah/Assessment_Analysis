@@ -158,6 +158,26 @@ def read_total_file(f):
     data['Pct'] = (data[total_col] / max_total * 100).round(1) if max_total else 0.0
     return meta, data
 
+def read_section_file(f):
+    meta, df = read_objectives_file(f)
+    if meta is None:
+        return None, None, None, None
+    f.seek(0)
+    raw = pd.read_excel(f, header=1)
+    if str(raw.iloc[0, 0]).strip().lower() != "points for objectives":
+        raw = raw.iloc[1:].reset_index(drop=True)
+    mask = raw.iloc[:, 0].astype(str).str.contains("Points for Objectives", case=False, na=False)
+    max_row = raw[mask].iloc[0]
+    obj_names = [c for c in df.columns if c not in ['Student Name', 'Obtained', 'Pct']]
+    obj_max = {}
+    for c in obj_names:
+        try:
+            mx = float(max_row[c])
+        except:
+            mx = 0
+        obj_max[c] = mx
+    return meta, df, obj_names, obj_max
+
 # =========================================================
 # PAGES
 # =========================================================
@@ -255,7 +275,6 @@ elif page == "👨‍🎓 Student Analysis":
                     obj_names.append(c); obj_max.append(mx)
         student_df = raw_students[~mask].copy().dropna(subset=['Student Name'])
         student_df = student_df[['Student Name'] + obj_names].copy()
-        def is_abs / no
         def is_absent(row):
             has_A = False; all_empty = True
             for c in obj_names:
@@ -305,7 +324,7 @@ elif page == "👨‍🎓 Student Analysis":
                 c5.metric("Very Good", cnt.get('Very Good', 0))
                 c6.metric("Outstanding", cnt.get('Outstanding', 0))
                 ts = len(rdf)
-                ge60 = (rdf['Total %'] >= 60).sum() / ts * 100 if ts else 0
+                ge60 = (rdf['Total %'] >= 60).sum() if False else (rdf['Total %'] >= 60).sum() / ts * 100 if ts else 0
                 gt60 = (rdf['Total %'] > 60).sum() / ts * 100 if ts else 0
                 gt75 = (rdf['Total %'] > 75).sum() / ts * 100 if ts else 0
                 ov = "Outstanding" if gt75 >= 90 else "Very Good" if gt60 >= 90 else "Good" if gt60 >= 75 else "Acceptable" if ge60 >= 60 else "Below Acceptable"
@@ -371,7 +390,7 @@ elif page == "📚 Grade Analysis":
         st.markdown(f"### 📊 Comparing: **{' / '.join(names)}** | 📚 Subject: **{metas[0].get('Subject', 'N/A')}**")
         merged[pct_cols] = merged[pct_cols].fillna(0)
         merged['Difference'] = (merged[pct_cols[-1]] - merged[pct_cols[0]]).round(1)
-        merged['Status'] = merged['Difference'].apply(lambda d: 'Growth' if d > 0.5 else 'Decay' if d < -0.5 else 'Same')
+        merged['Status'] = merged['Difference'].apply(lambda d: 'Growth' if d > 0.5 else 'Decay' if False else 'Decay' if d < -0.5 else 'Same')
         merged['Support Level'] = merged[pct_cols[-1]].apply(support_level)
         st.subheader("📊 Comparison Table (Percentage Based)")
         st.dataframe(merged.style.map(color_cell, subset=['Status']), use_container_width=True)
@@ -395,7 +414,7 @@ elif page == "📚 Grade Analysis":
         st.subheader("📈 Average Score Trend (%)")
         st.plotly_chart(px.line(avg, x='Assessment', y='Average', markers=True), use_container_width=True)
         st.subheader("📈 Student Growth (Difference)")
-        st.plotly_chart(px.bar(merged, x='student' if False else 'Student Name', y='Difference', color='Status'), use_container_width=True)
+        st.plotly_chart(px.bar(merged, x='Student Name', y='Difference', color='Status'), use_container_width=True)
         support_count = merged['Support Level'].value_counts().reset_index(); support_count.columns = ['Support Level', 'Students']
         st.subheader("👥 Support Groups")
         st.dataframe(support_count, use_container_width=True)
@@ -434,7 +453,7 @@ elif page == "📈 MAP Analysis":
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("👥 Students", total_students)
             c2.metric("📉 Previous Avg RIT", round(avg_previous, 1))
-            c3.metric("📈 Current Avg RIT", round(avg_current, 1))
+            c3.metric("📈 Current Avg RIT", "x" ) if False else c3.metric("📈 Current Avg RIT", round(avg_current, 1))
             c4.metric("🚀 Average Growth", round(avg_growth, 1))
             st.metric("🎯 Average Percentile", round(avg_percentile, 1))
             st.markdown("---")
@@ -505,57 +524,93 @@ elif page == "🎯 Achievement & Gaps":
 
 elif page == "📑 Reports":
     st.title("📑 Reports")
-
     st.markdown("### 🛠️ Available Services")
-    service = st.radio(
-        "Select Service",
-        ["Compare between sections"]
-    )
+    service = st.radio("Select Service", ["Compare between sections"])
 
     if service == "Compare between sections":
         st.header("🔍 Compare Between Sections")
-        comp_type = st.radio(
-            "Comparison Type",
-            [
-                "By Assessment Objectives",
-                "By Assessment Total Mark",
-                "By External Benchmark Assessment"
-            ]
-        )
+        comp_type = st.radio("Comparison Type", [
+            "By Assessment Objectives",
+            "By Assessment Total Mark",
+            "By External Benchmark Assessment"
+        ])
 
         if comp_type == "By Assessment Objectives":
             st.subheader("📚 By Assessment Objectives")
             st.info(
-                "Upload one Student Analysis Excel file per section. "
-                "Each file should follow the Student Analysis template "
-                "(objective names, descriptions, marks)."
+                "Select number of sections, then upload one Student Analysis "
+                "Excel file per section. Comparison bands: Below 60%, 60-75%, "
+                "76-85%, 86-100% (Outstanding)."
             )
-            n_sec = st.number_input(
-                "Number of sections",
-                min_value=2,
-                max_value=10,
-                value=2,
-                step=1,
-                key="nsec"
-            )
+            n_sec = st.number_input("Number of sections", min_value=2, max_value=10, value=2, step=1, key="nsec")
             sec_files = []
             for i in range(int(n_sec)):
-                sec_files.append(
-                    st.file_uploader(
-                        f"📄 Section {i+1} file",
-                        type=["xlsx", "xls"],
-                        key=f"secfile_{i}"
-                    )
-                )
+                sec_files.append(st.file_uploader(f"📄 Section {i+1} file", type=["xlsx", "xls"], key=f"secfile_{i}"))
+
             if all(sec_files):
-                st.markdown("### 📋 Loaded Sections Preview")
+                sections_data = []
                 for idx, f in enumerate(sec_files, 1):
-                    meta, df = read_objectives_file(f)
+                    meta, df, obj_names, obj_max = read_section_file(f)
+                    if meta is None:
+                        st.error(f"❌ Section {idx} file invalid"); st.stop()
                     sec_name = meta.get('Class', f'Section {idx}')
-                    st.markdown(f"**Section {idx}: {sec_name}**")
-                    st.dataframe(df, use_container_width=True)
-                st.success(
-                    "Files loaded successfully. "
-                    "Awaiting your specified comparison criteria for "
-                    "'By Assessment Objectives' to compute the final report."
-                )
+                    def band(p):
+                        if pd.isna(p): return "Below 60%"
+                        if p < 60: return "Below 60%"
+                        elif p <= 75: return "60-75%"
+                        elif p <= 85: return "76-85%"
+                        else: return "86-100% (Outstanding)"
+                    df['Band'] = df['Pct'].apply(band)
+                    obj_avg = {}
+                    for c in obj_names:
+                        mx = obj_max[c]
+                        if mx > 0:
+                            obj_avg[c] = (df[c] / mx * 100).mean()
+                        else:
+                            obj_avg[c] = 0
+                    sections_data.append({
+                        'name': sec_name,
+                        'df': df,
+                        'bands': df['Band'].value_counts(),
+                        'obj_avg': obj_avg,
+                        'obj_names': obj_names
+                    })
+
+                band_order = ["Below 60%", "60-75%", "76-85%", "86-100% (Outstanding)"]
+                band_df = pd.DataFrame()
+                for sd in sections_data:
+                    temp = sd['bands'].reindex(band_order).fillna(0).astype(int)
+                    temp.name = sd['name']
+                    band_df = pd.concat([band_df, temp.to_frame().T], axis=0)
+                band_df = band_df[band_order]
+
+                plot_df = band_df.reset_index().melt(id_vars='index', value_vars=band_order)
+                plot_df.columns = ['Section', 'Band', 'Count']
+
+                st.subheader("📊 Band Distribution per Section")
+                v1, v2 = st.columns(2)
+                with v1:
+                    st.plotly_chart(
+                        px.bar(plot_df, x='Band', y='Count', color='Section', barmode='group', text='Count'),
+                        use_container_width=True
+                    )
+                with v2:
+                    overall = band_df.sum().reindex(band_order)
+                    st.plotly_chart(
+                        px.pie(names=band_order, values=overall.values, hole=0.3, color_discrete_sequence=px.colors.qualitative.Safe),
+                        use_container_width=True
+                    )
+
+                st.subheader("🏆 Section Order per Objective (Rank 1 = Highest Average %)")
+                rank_rows = []
+                obj_union = sections_data[0]['obj_names']
+                for obj in obj_union:
+                    avgs = {sd['name']: sd['obj_avg'].get(obj, 0) for sd in sections_data}
+                    sorted_secs = sorted(avgs.items(), key=lambda x: x[1], reverse=True)
+                    row = {'Objective': obj}
+                    for i, (sname, val) in enumerate(sorted_secs, 1):
+                        row[f"Rank {i}"] = f"{sname} ({val:.1f}%)"
+                    rank_rows.append(row)
+                st.dataframe(pd.DataFrame(rank_rows), use_container_width=True)
+
+                st.success("✅ Comparison complete. Other comparison types coming next!")
