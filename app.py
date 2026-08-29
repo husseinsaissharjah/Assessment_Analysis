@@ -83,7 +83,7 @@ def total_template():
 def gaps_template():
     data = [
         ["Teacher Name: Example Teacher", "Class: Grade 7A", "Date: 27/08/2026", "Assessment name: Internal vs MAP", "Subject: Mathematics"],
-        ["Student Name", "Over", "Percentile of MAP"],
+        ["Student Name", "Total of Internal", "Percentile of MAP"],
         ["Over", 100, ""],
         ["Student 1", 82, 75],
         ["Student 2", 91, 88],
