@@ -92,7 +92,7 @@ def gaps_template():
     data = [
         ["Teacher Name: Example Teacher", "Class: Grade 7A", "Date: 27/08/2026", "Assessment name: Internal vs MAP", "Subject: Mathematics"],
         ["Student Name", "Total of Internal", "Percentile of MAP"],
-        ["Total of Internal", 100, ""],
+        ["Over", 100, ""],
         ["Student 1", 82, 75],
         ["Student 2", 91, 88],
         ["Student 3", 65, 50]
@@ -165,8 +165,7 @@ def read_total_file(f):
         val = str(c).strip()
         if ':' in val:
             k, v = val.split(':', 1)
-            kend = k.strip()
-            meta[kend] = v.strip()
+            meta[k.strip()] = v.strip()
     headers = [str(x).strip() for x in raw.iloc[1, :].tolist()]
     total_idx = None
     for i in range(2, len(raw)):
@@ -200,7 +199,7 @@ def read_gaps_file(f):
     headers = [str(x).strip() for x in raw.iloc[1, :].tolist()]
     total_idx = None
     for i in range(2, len(raw)):
-        if 'total of internal' in str(raw.iloc[i, 0]).lower():
+        if 'over' in str(raw.iloc[i, 0]).lower():
             total_idx = i
             break
     if total_idx is None:
@@ -414,7 +413,7 @@ elif page == "📝 Objective Analysis":
                     st.plotly_chart(px.bar(rdf.dropna(subset=['Total %']), x='Student Name', y='Total %', color='Level', range_y=[0, 100]), use_container_width=True)
                 with v2:
                     st.subheader("📊 Level Distribution")
-                    st.plotly_chart(px.pie(cdf, names='Level', values='Count', color='Level', color_discrete_map=COLORS, hole=0.3), use_container_width=True)
+                    st.plotly_chart(px.pie(cdf, names='Level', value='Count' if False else 'Count', color='Level', color_discrete_map=COLORS, hole=0.3), use_container_width=True)
                 st.subheader("🎯 Student Support Levels")
                 st.plotly_chart(px.bar(rdf.dropna(subset=['Total %']), x='Student Name', y='Total %', color='Support Level', range_y=[0, 100]), use_container_width=True)
                 support_count = rdf['Support Level'].value_counts().reset_index(); support_count.columns = ['Support Level', 'Students']
@@ -458,7 +457,7 @@ elif page == "📈 Class Total Average Analysis":
             names.append(meta.get('Assessment name', 'N/A'))
             descriptions.append(obj_desc_g)
             col = f'Pct{i + 1}'
-            keep = df[['Student Name', 'Pect' if False else 'Pct']].rename(columns={'Pct': col})
+            keep = df[['Student Name', 'Pct']].rename(columns={'Pct': col})
             merged = keep if merged is None else pd.merge(merged, keep, on='Student Name', how='outer')
             pct_cols.append(col)
         st.subheader("📋 Assessment Information")
@@ -565,13 +564,13 @@ elif page == "🎯 Achievement & Gaps":
         "This service compares a class's Internal Assessment total marks with their MAP Percentile "
         "to identify achievement gaps. Upload ONE Excel sheet with columns: "
         "**Student Name**, **Total of Internal**, **Percentile of MAP**. "
-        "Row 1: Assessment Information | Row 2: Headers | Row 3: 'Total of Internal' + Maximum Mark | Row 4+: Student Marks."
+        "Row 1: Assessment Information | Row 2: Headers | Row 3: 'Over' + Maximum Mark | Row 4+: Student Marks."
     )
     f = st.file_uploader("📄 Upload Single Sheet", type=["xlsx", "xls"], key="gaps")
     if f:
         m, df = read_gaps_file(f)
         if m is None:
-            st.error("❌ File missing required rows/columns (Total of Internal / Percentile of MAP)."); st.stop()
+            st.error("❌ File missing required rows/columns (Over / Percentile of MAP)."); st.stop()
         st.subheader("📋 Assessment Information")
         st.markdown(f"👩‍🏫 {m.get('Teacher Name', 'N/A')} | 🏫 {m.get('Class', 'N/A')} | 📅 {m.get('Date', 'N/A')} | 📝 {m.get('Assessment name', 'N/A')} | 📚 {m.get('Subject', 'N/A')}")
         df['Difference'] = (df['Pct2'] - df['Pct1']).round(1)
