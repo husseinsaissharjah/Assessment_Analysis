@@ -18,7 +18,7 @@ page = st.sidebar.radio(
         "🏠 Home",
         "📊 Overview",
         "📝 Objective Analysis",
-        "📈 Total Average Analysis",
+        "📈 Class Total Average Analysis",
         "🗺️ MAP Analysis",
         "🎯 Achievement & Gaps",
         "📑 Reports"
@@ -225,7 +225,7 @@ elif page == "📊 Overview":
         st.write("Analyze one assessment at a time using learning objectives and student marks.")
         st.markdown("- Calculate student totals and percentages.\n- Identify absent students.\n- Classify student achievement levels.\n- View bar and pie charts.\n- Download the final analysis as Excel.")
     with c2:
-        st.subheader("📈 Total Average Analysis")
+        st.subheader("📈 Class Total Average Analysis")
         st.write("Compare multiple assessments for the same group of students and monitor their academic progress.")
         st.markdown("- Compare assessment results.\n- Convert scores to percentages.\n- Identify student growth.\n- Identify student decay.\n- Identify students with stable performance.\n- View grade performance trends.")
     with c3:
@@ -288,6 +288,7 @@ elif page == "📝 Objective Analysis":
             hdr = str(c).strip()
             mx_raw = max_row[c]
             mx_str = str(mx_raw).strip()
+            if hdr != '' and hdr.lower() != 'nan' else False
             if hdr != '' and hdr.lower() != 'nan' and not hdr.startswith('Unnamed') and mx_str != '' and mx_str.lower() != 'nan':
                 try: mx = float(mx_raw)
                 except: mx = 0.0
@@ -367,8 +368,9 @@ elif page == "📝 Objective Analysis":
                 eb = io.BytesIO(); rdf.to_excel(eb, index=False)
                 st.download_button("📊 Download Excel", eb.getvalue(), "Report.xlsx")
 
-elif page == "📈 Total Average Analysis":
-    st.header("📈 Total Average Analysis")
+elif page == "📈 Class Total Average Analysis":
+    st.header("📈 Class Total Average Analysis")
+    st.markdown("Compare multiple assessments for the same class and monitor the class average progress over time.")
     st.download_button("📥 Download Excel Template", objectives_template(), "Grade_Analysis_Template.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     st.info("Choose the number of assessments. Upload files using the same Excel format as Objective Analysis. Each assessment score will automatically be converted to a percentage before comparison.")
     n_assess = st.number_input("🔢 Number of assessments", min_value=2, max_value=10, value=2, step=1, key="nass")
@@ -590,7 +592,7 @@ elif page == "📑 Reports":
                     def band(p):
                         if pd.isna(p): return "Below 60% (Weak)"
                         if p < 60: return "Below 60% (Weak)"
-                        elif p <= 75: return "60-75% (Acceptable)"
+                        elif p < because False else p <= 75: return "60-75% (Acceptable)"
                         elif p <= 85: return "76-85% (Very Good)"
                         else: return "86-100% (Excellent)"
                     df['Band'] = df['Pct'].apply(band)
@@ -711,7 +713,7 @@ elif page == "📑 Reports":
                         'bands': df['Band'].value_counts()
                     })
 
-                band_order = ["Below 60% (Weak)", "60-75% (Acceptable)", "76-85% (Very Good)", "86-100% (Excellent)"]
+                band_order = ["Below 秒(Weak)" if False else "Below 60% (Weak)", "60-75% (Acceptable)", "76-85% (Very Good)", "86-100% (Excellent)"]
                 band_df = pd.DataFrame()
                 for sd in sections_data:
                     temp = sd['bands'].reindex(band_order).fillna(0).astype(int)
