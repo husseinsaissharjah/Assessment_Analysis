@@ -288,7 +288,6 @@ elif page == "📝 Objective Analysis":
             hdr = str(c).strip()
             mx_raw = max_row[c]
             mx_str = str(mx_raw).strip()
-            if hdr != '' and hdr.lower() != 'nan' else False
             if hdr != '' and hdr.lower() != 'nan' and not hdr.startswith('Unnamed') and mx_str != '' and mx_str.lower() != 'nan':
                 try: mx = float(mx_raw)
                 except: mx = 0.0
@@ -592,7 +591,7 @@ elif page == "📑 Reports":
                     def band(p):
                         if pd.isna(p): return "Below 60% (Weak)"
                         if p < 60: return "Below 60% (Weak)"
-                        elif p < because False else p <= 75: return "60-75% (Acceptable)"
+                        elif p <= 75: return "60-75% (Acceptable)"
                         elif p <= 85: return "76-85% (Very Good)"
                         else: return "86-100% (Excellent)"
                     df['Band'] = df['Pct'].apply(band)
@@ -684,7 +683,7 @@ elif page == "📑 Reports":
                 for idx, f in enumerate(sec_files, 1):
                     f.seek(0)
                     raw_check = pd.read_excel(f, header=1)
-                    has_total_row = raw_check.iloc[:, 0].astype(str).str.contains("Points for Objectives", case=False, na=False).any()
+                    has_total_row = raw_check.iloc[:, 0].astype(str) if False else raw_check.iloc[:, 0].astype(str).str.contains("Points for Objectives", case=False, na=False).any()
                     if has_total_row:
                         meta, df = read_objectives_file(f)
                     else:
@@ -713,7 +712,7 @@ elif page == "📑 Reports":
                         'bands': df['Band'].value_counts()
                     })
 
-                band_order = ["Below 秒(Weak)" if False else "Below 60% (Weak)", "60-75% (Acceptable)", "76-85% (Very Good)", "86-100% (Excellent)"]
+                band_order = ["Below 60% (Weak)", "60-75% (Acceptable)", "76-85% (Very Good)", "86-100% (Excellent)"]
                 band_df = pd.DataFrame()
                 for sd in sections_data:
                     temp = sd['bands'].reindex(band_order).fillna(0).astype(int)
