@@ -7,53 +7,18 @@ import os
 
 st.set_page_config(page_title="Assessment Analysis", page_icon="📊", layout="wide")
 
-# ================= MODIFIED NAVIGATION (EDGE-LESS BUTTONS) =================
-# CSS to remove edges/borders from sidebar buttons and make them look like a menu
-st.markdown("""
-    <style>
-    [data-testid="stSidebar"] .stButton {
-        width: 100%;
-    }
-    [data-testid="stSidebar"] .stButton button {
-        border: none !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        background-color: transparent;
-        width: 100%;
-        text-align: left;
-        padding: 0.5rem 0.75rem;
-        font-size: 1rem;
-    }
-    [data-testid="stSidebar"] .stButton button:hover {
-        background-color: rgba(128, 128, 128, 0.2);
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# Initialize session state for navigation (fixes the "deselect" problem)
-if 'page' not in st.session_state:
-    st.session_state.page = "🏠 Home"
-
-# Render navigation as buttons
-st.sidebar.markdown("**Navigation**")
-pages = [
-    "🏠 Home",
-    "📊 Overview",
-    "📝 Objective Analysis",
-    "📈 Class Total Average Analysis",
-    "🗺️ MAP Analysis",
-    "🎯 Achievement & Gaps",
-    "📑 Reports"
-]
-
-for p in pages:
-    # Show a pointer next to the currently selected page
-    btn_label = f"▶ {p}" if st.session_state.page == p else p
-    if st.sidebar.button(btn_label, key=p, use_container_width=True):
-        st.session_state.page = p  # Only one variable holds the selection
-
-page = st.session_state.page
-# ==========================================================================
+page = st.sidebar.radio(
+    "Navigation",
+    [
+        "🏠 Home",
+        "📊 Overview",
+        "📝 Objective Analysis",
+        "📈 Class Total Average Analysis",
+        "🗺️ MAP Analysis",
+        "🎯 Achievement & Gaps",
+        "📑 Reports"
+    ]
+)
 
 COLORS = {'Absent':'#808080','Fail':'#d62728','Acceptable':'#ff7f0e','Good':'#2ca02c','Very Good':'#1f77b4','Outstanding':'#9467bd'}
 ORDER = ['Absent','Fail','Acceptable','Good','Very Good','Outstanding']
@@ -230,8 +195,6 @@ def read_gaps_file(f):
             break
     if total_idx is None:
         return None, None
-    if total_idx is None:
-        return None, None
     try: max_total = float(raw.iloc[total_idx, 1])
     except: max_total = 100.0
     data = raw.iloc[2:, :].copy()
@@ -336,7 +299,7 @@ elif page == "📝 Objective Analysis":
         m1, m2, m3, m4 = st.columns(4)
         m1.markdown(f"**👩‍🏫 Teacher:** {meta_info.get('Teacher Name', 'N/A')}")
         m2.markdown(f"**🏫 Class:** {meta_info.get('Class', 'N/A')}")
-        m3.markdown(f"**📅 Date:** {meta_info.get('Date', 'N/A')}")
+        m3.markdown(f"**📅 Date:** {meta_info.get('school', 'N/A')}" if False else f"**📅 Date:** {meta_info.get('Date', 'N/A')}")
         m4.markdown(f"**📝 Assessment:** {meta_info.get('Assessment name', 'N/A')}")
         st.markdown(f"### 📝 Name: **{meta_info.get('Assessment name', 'N/A')}** | 📚 Subject: **{meta_info.get('Subject', 'N/A')}**")
         raw = pd.read_excel(up_file, header=1)
@@ -847,7 +810,7 @@ elif page == "📑 Reports":
             )
             n_sec = st.number_input("Number of classes", min_value=2, max_value=10, value=2, step=1, key="nsec_ext")
             sec_files = []
-            for i in range(int(int(n_sec))):
+            for i in range(int(n_sec)):
                 sec_files.append(st.file_uploader(f"📄 Class {i+1} file", type=["xlsx", "xls"], key=f"extfile_{i}"))
 
             if all(sec_files):
