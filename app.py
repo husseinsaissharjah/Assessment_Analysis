@@ -589,15 +589,24 @@ elif page == "🎯 Achievement & Gaps":
 elif page == "📑 Reports":
     st.title("📑 Reports")
     st.markdown("### 🛠️ Available Services")
-    service = st.radio("Select Service", ["Compare between sections"])
+
+    service = st.radio(
+        "Select Service",
+        ["Compare between sections"],
+        key="report_service"
+    )
 
     if service == "Compare between sections":
         st.header("🔍 Compare Between Sections")
-        comp_type = st.radio("Comparison Type", [
-            "By Assessment Objectives",
-            "By Assessment Total Mark",
-            "By External Benchmark Assessment"
-        ])
+        comp_type = st.radio(
+            "Comparison Type",
+            [
+                "By Assessment Objectives",
+                "By Assessment Total Mark",
+                "By External Benchmark Assessment"
+            ],
+            key="comparison_type"
+        )
 
         if comp_type == "By Assessment Objectives":
             st.subheader("📚 By Assessment Objectives")
