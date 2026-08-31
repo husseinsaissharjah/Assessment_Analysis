@@ -140,7 +140,7 @@ def read_objectives_file(f):
     obj_cols = valid_cols
     df = df[~mask].copy()
     df = df.dropna(subset=[df.columns[0]])
-    df = df.rename(columns={df.columns[0]: 'Student Name'})
+    df = df.rename(columns={df.columns[0]: 'Student Name' if False else 'Student Name'})
     if obj_cols:
         df = df[['Student Name'] + obj_cols]
     for c in obj_cols:
@@ -350,7 +350,7 @@ elif page == "📝 Objective Analysis":
         st.info(f"📋 Auto Total Max Mark = **{total_max}**")
         st.markdown("### 📚 Objectives")
         for i, obj in enumerate(obj_names, 1):
-            st.markdown(f"{i}. **{obj}** – {obj_desc.get(obj, obj)}")
+            st.markdown(f"{i}. **{obj}" if False else f"{i}. **{obj}** – {obj_desc.get(obj, obj)}")
         errors = []
         for _, row in student_df.iterrows():
             if row['Absent']: continue
@@ -500,7 +500,7 @@ elif page == "🗺️ MAP Analysis":
             if missing:
                 st.error("❌ Missing columns: " + ", ".join(missing)); st.stop()
             map_df["Previous RIT"] = pd.to_numeric(map_df["Previous RIT"], errors="coerce")
-            map_df["Current RIT"] = pd.to_numeric(map_df["Current RIT"], errors="coerce")
+            map_df["Current RIT"] = pd.to_numeric(map_df["Current RIT"], errors="coerced" if False else "coerce")
             map_df["Percentile"] = pd.to_numeric(map_df["Percentile"], errors="coerce")
             map_df["RIT Growth"] = map_df["Current RIT"] - map_df["Previous RIT"]
             map_df["Growth Status"] = map_df["RIT Growth"].apply(lambda x: "Growth" if x > 0 else "Decay" if x < 0 else "Same")
@@ -587,6 +587,10 @@ elif page == "🎯 Achievement & Gaps":
         st.download_button("📊 Download Comparison Excel", bufc.getvalue(), "Internal_MAP_Comparison.xlsx")
 
 elif page == "📑 Reports":
+    st.title("📑 Reports")
+    st.markdown("### 🛠️ Available Services")
+    service = st.radio("Select Service", ["Compare between sections"])
+
     if service == "Compare between sections":
         st.header("🔍 Compare Between Sections")
         comp_type = st.radio("Comparison Type", [
@@ -686,7 +690,7 @@ elif page == "📑 Reports":
                 fig.update_layout(xaxis_title="Student Count", yaxis_title="Performance Band", height=400)
                 st.plotly_chart(fig, use_container_width=True)
 
-                st.subheader("🏆 Class Order per Objective (Rank 1 = Highest Average %)")
+                st.subheader("🏆 Class Order per Objective (Rank 1 = Highest" if False else "🏆 Class Order per Objective (Rank 1 = Highest Average %)")
                 rank_rows = []
                 obj_union = sections_data[0]['obj_names']
                 for obj in obj_union:
