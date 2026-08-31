@@ -13,98 +13,85 @@ if 'page' not in st.session_state:
 if 'lang' not in st.session_state:
     st.session_state.lang = "English"
 
-# Translation Dictionary (Add any language you want!)
+# Translation Dictionary
 TRANSLATIONS = {
     "Arabic": {
-        "🏠 Home": "🏠 الرئيسية",
-        "📊 Overview": "📊 نظرة عامة",
-        "📝 Objective Analysis": "📝 تحليل الأهداف",
-        "📈 Class Total Average Analysis": "📈 تحليل متوسط الصف",
-        "🗺️ MAP Analysis": "🗺️ تحليل ماب",
-        "🎯 Achievement & Gaps": "🎯 الإنجاز والفجوات",
-        "📑 Reports": "📑 التقارير",
-        "Navigation": "التنقل",
-        "### 🌐 Language": "### 🌐 اللغة",
-        "Assessment Analysis": "تحليل التقييم",
-        "### Student Assessment & Achievement Dashboard": "### لوحة تقييم الطلاب والإنجاز",
+        "🏠 Home": "🏠 الرئيسية", "📊 Overview": "📊 نظرة عامة", "📝 Objective Analysis": "📝 تحليل الأهداف",
+        "📈 Class Total Average Analysis": "📈 تحليل متوسط الصف", "🗺️ MAP Analysis": "🗺️ تحليل ماب",
+        "🎯 Achievement & Gaps": "🎯 الإنجاز والفجوات", "📑 Reports": "📑 التقارير", "Navigation": "التنقل",
+        "Assessment Analysis": "تحليل التقييم", "### Student Assessment & Achievement Dashboard": "### لوحة تقييم الطلاب والإنجاز",
         "Analyze MAP, internal assessments, grades, and student performance in seconds.": "حلل تقييمات ماب والداخلية والدرجات وأداء الطلاب في ثوانٍ.",
-        "### 📌 How to use": "### 📌 كيفية الاستخدام",
-        "### ① Upload Data": "### ① تحميل البيانات",
+        "### 📌 How to use": "### 📌 كيفية الاستخدام", "### ① Upload Data": "### ① تحميل البيانات",
         "Upload your Excel files with student marks.": "قم بتحميل ملفات إكسل بعلامات الطلاب.",
-        "### ② Choose Analysis": "### ② اختر التحليل",
-        "Pick the analysis type from the sidebar.": "اختر نوع التحليل من القائمة الجانبية.",
-        "### ③ View Insights": "### ③ عرض الرؤى",
-        "See charts, gaps, and download reports.": "شاهد الرسوم والفجوات وحمل التقارير.",
+        "### ② Choose Analysis": "### ② اختر التحليل", "Pick the analysis type from the sidebar.": "اختر نوع التحليل من القائمة الجانبية.",
+        "### ③ View Insights": "### ③ عرض الرؤى", "See charts, gaps, and download reports.": "شاهد الرسوم والفجوات وحمل التقارير.",
         "Use the sidebar on the left to navigate to your analysis.": "استخدم القائمة الجانبية للتنقل في التحليل.",
         "📊 Assessment Analysis Overview": "📊 نظرة عامة على تحليل التقييم",
         "The Assessment Analysis tool is designed to help teachers, coordinators, and school leaders analyze student achievement quickly and consistently.": "صممت أداة التحليل لمساعدة المعلمين والمنسقين على تحليل إنجازات الطلاب بسرعة.",
-        "📝 Objective Analysis": "📝 تحليل الأهداف",
-        "Analyze one assessment at a time using learning objectives and student marks.": "حلل تقييماً واحداً باستخدام الأهداف وعلامات الطلاب.",
-        "- Calculate student totals and percentages.\n- Identify absent students.\n- Classify student achievement levels.\n- View bar and pie charts.\n- Download the final analysis as Excel.": "- احسب الإجمالي والنسب.\n- حدد الغائبين.\n- صنف مستويات الإنجاز.\n- عرض الرسوم البيانية.\n- حمل التحليل كإكسل.",
-        "📈 Class Total Average Analysis": "📈 تحليل متوسط الصف",
-        "Compare multiple assessments for the same class and monitor the class average progress over time.": "قارن بين تقييمات متعددة لنفس الصف وراقب التقدم.",
-        "🗺️ MAP Analysis": "🗺️ تحليل ماب",
-        "🎯 Achievement & Gaps": "🎯 الإنجاز والفجوات",
-        "📑 Reports": "📑 التقارير",
-        "👩‍🏫 Teacher:": "👩‍🏫 المعلم:",
-        "🏫 Class:": "🏫 الصف:",
-        "📅 Date:": "📅 التاريخ:",
-        "📝 Assessment:": "📝 التقييم:",
-        "📚 Subject:": "📚 المادة:",
+        "📝 Objective Analysis": "📝 تحليل الأهداف", "Analyze one assessment at a time using learning objectives and student marks.": "حلل تقييماً واحداً باستخدام الأهداف وعلامات الطلاب.",
+        "📈 Class Total Average Analysis": "📈 تحليل متوسط الصف", "Compare multiple assessments for the same class and monitor the class average progress over time.": "قارن بين تقييمات متعددة لنفس الصف وراقب التقدم.",
+        "🗺️ MAP Analysis": "🗺️ تحليل ماب", "🎯 Achievement & Gaps": "🎯 الإنجاز والفجوات", "📑 Reports": "📑 التقارير",
+        "👩‍🏫 Teacher:": "👩‍🏫 المعلم:", "🏫 Class:": "🏫 الصف:", "📅 Date:": "📅 التاريخ:", "📝 Assessment:": "📝 التقييم:", "📚 Subject:": "📚 المادة:",
         "Absent": "غائب", "Fail": "راسب", "Acceptable": "مقبول", "Good": "جيد", "Very Good": "جيد جداً", "Outstanding": "متميز",
-        "Growth": "نمو", "Decay": "تراجع", "Same": "ثابت",
-        "Intervention": "تدخل", "Monitor": "مراقبة", "On Track": "على المسار", "Enrichment": "إثراء", "N/A": "غير متوفر",
-        "Below 60% (Weak)": "أقل من 60% (ضعيف)", "60-75% (Acceptable)": "60-75% (مقبول)", "76-85% (Very Good)": "76-85% (جيد جداً)", "86-100% (Excellent)": "86-100% (ممتاز)"
+        "Growth": "نمو", "Decay": "تراجع", "Same": "ثابت", "Intervention": "تدخل", "Monitor": "مراقبة", "On Track": "على المسار", "Enrichment": "إثراء", "N/A": "غير متوفر",
+        "Below 60% (Weak)": "أقل من 60% (ضعيف)", "60-75% (Acceptable)": "60-75% (مقبول)", "76-85% (Very Good)": "76-85% (جيد جداً)", "86-100% (Excellent)": "86-100% (ممتاز)",
+        "Auto Total Max Mark": "الحد الأقصى للدرجات", "Name:": "الاسم:", "Objectives": "الأهداف", "Preview": "معاينة",
+        "Analyze Assessment": "تحليل التقييم", "Step 2: Analysis Report": "الخطوة 2: تقرير التحليل", "Step 1: Upload Student Marks Excel": "الخطوة 1: تحميل إكسل علامات الطلاب",
+        "📊 Comparison Table (Percentage Based)": "📊 جدول المقارنة (حسب النسبة المئوية)", "📢 Summary": "📢 ملخص", "Bar Chart": "رسم بياني شريطي", "Pie Chart": "رسم بياني دائري",
+        "📈 Average Score Trend (%)": "📈 اتجاه متوسط الدرجات (%)", "📈 Student Growth (Difference)": "📈 نمو الطالب (الفرق)", "👥 Support Groups": "👥 مجموعات الدعم",
+        "📋 Assessment Information": "📋 معلومات التقييم", "📋 Info": "📋 معلومات", "🎯 Student Percentile": "🎯 النسبة المئوية للطالب",
+        "📈 Student Gap (Difference)": "📈 فجوة الطالب (الفرق)", "📊 Student Achievement": "📊 إنجاز الطالب", "📊 Level Distribution": "📊 توزيع المستويات",
+        "🎯 Student Support Levels": "🎯 مستويات دعم الطالب", "🔢 Number of assessments": "🔢 عدد التقييمات", "Upload Excel": "تحميل إكسل",
+        "📄 Assessment": "📄 تقييم", "📄 Upload MAP Data Excel": "📄 تحميل إكسل بيانات ماب", "📋 MAP Data Preview": "📋 معاينة بيانات ماب",
+        "📊 MAP Summary": "📊 ملخص ماب", "👥 Students": "👥 الطلاب", "📉 Previous Avg RIT": "📉 متوسط ريت السابق", "📈 Current Avg RIT": "📈 متوسط ريت الحالي",
+        "🚀 Average Growth": "🚀 متوسط النمو", "🎯 Average Percentile": "🎯 متوسط النسبة المئوية", "📈 Student Growth": "📈 نمو الطالب",
+        "📊 Growth Distribution": "📊 ت alaysis", "📋 Student MAP Analysis": "📋 تحليل طالب ماب", "📥 Download MAP Analysis": "📥 تحميل تحليل ماب",
+        "🎯 Achievement & Gaps (Internal vs MAP)": "🎯 الإنجاز والفجوات (داخلي مقابل ماب)", "📄 Upload Single Sheet": "📄 تحميل ورقة واحدة",
+        "📑 Reports": "📑 التقارير", "Select Service": "اختر الخدمة", "Compare between sections": "مقارنة بين الأقسام", "🔍 Compare Between Sections": "🔍 مقارنة بين الأقسام",
+        "Comparison Type": "نوع المقارنة", "By Assessment Objectives": "حسب أهداف التقييم", "By Assessment Total Mark": "حسب الدرجة الإجمالية", "By External Benchmark Assessment": "حسب تقييم المعيار الخارجي",
+        "📚 By Assessment Objectives": "📚 حسب أهداف التقييم", "Number of classes": "عدد الفصول", "📄 Class": "📄 الصف", "file": "ملف",
+        "📊 Band Distribution per Class": "📊 توزيع الفرق لكل صف", "✅ Comparison complete.": "✅ اكتملت المقارنة.", "📊 By Assessment Total Mark": "📊 حسب الدرجة الإجمالية",
+        "🏢 By External Benchmark Assessment": "🏢 حسب تقييم المعيار الخارجي", "Info": "معلومات", "Class": "صف", "Subject:": "المادة:"
     }
 }
 
 def t(text):
-    """Translates text based on session state, falls back to English."""
     return TRANSLATIONS.get(st.session_state.lang, {}).get(text, text)
 
-# CSS for edge-less buttons
+# CSS to remove edges from sidebar buttons
 st.markdown("""
     <style>
-    [data-testid="stSidebar"] .stButton {
-        width: 100%;
-    }
+    [data-testid="stSidebar"] .stButton { width: 100%; }
     [data-testid="stSidebar"] .stButton button {
-        border: none !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        background-color: transparent;
-        width: 100%;
-        text-align: left;
-        padding: 0.5rem 0.75rem;
-        font-size: 1rem;
+        border: none !important; border-radius: 0 !important; box-shadow: none !important;
+        background-color: transparent; width: 100%; text-align: left; padding: 0.5rem 0.75rem; font-size: 1rem;
     }
-    [data-testid="stSidebar"] .stButton button:hover {
-        background-color: rgba(128, 128, 128, 0.2);
-    }
+    [data-testid="stSidebar"] .stButton button:hover { background-color: rgba(128, 128, 128, 0.2); }
     </style>
 """, unsafe_allow_html=True)
 
-# ================= LANGUAGE BUTTONS (TOP) =================
-st.sidebar.markdown(t("### 🌐 Language"))
-lang_c1, lang_c2 = st.sidebar.columns(2)
-with lang_c1:
-    if st.button("English", use_container_width=True, key="lang_en"):
-        st.session_state.lang = "English"
-with lang_c2:
-    if st.button("العربية", use_container_width=True, key="lang_ar"):
-        st.session_state.lang = "Arabic"
-
-# ================= NAVIGATION (EDGE-LESS) =================
-st.sidebar.markdown(f"**{t('Navigation')}**")
-pages = [
-    "🏠 Home", "📊 Overview", "📝 Objective Analysis",
-    "📈 Class Total Average Analysis", "🗺️ MAP Analysis",
-    "🎯 Achievement & Gaps", "📑 Reports"
-]
-for p in pages:
-    btn_label = f"▶ {t(p)}" if st.session_state.page == p else t(p)
-    if st.sidebar.button(btn_label, key=p, use_container_width=True):
-        st.session_state.page = p
+# ================= SIDEBAR (LANGUAGE + NAVIGATION) =================
+with st.sidebar:
+    st.markdown(t("### 🌐 Language"))
+    lang_c1, lang_c2 = st.columns(2)
+    with lang_c1:
+        if st.button("English", use_container_width=True, key="lang_en"):
+            st.session_state.lang = "English"
+    with lang_c2:
+        if st.button("العربية", use_container_width=True, key="lang_ar"):
+            st.session_state.lang = "Arabic"
+    
+    st.markdown("---")
+    st.markdown(f"**{t('Navigation')}**")
+    pages = [
+        "🏠 Home", "📊 Overview", "📝 Objective Analysis",
+        "📈 Class Total Average Analysis", "🗺️ MAP Analysis",
+        "🎯 Achievement & Gaps", "📑 Reports"
+    ]
+    for p in pages:
+        btn_label = f"▶ {t(p)}" if st.session_state.page == p else t(p)
+        if st.button(btn_label, key=p, use_container_width=True):
+            st.session_state.page = p
 
 page = st.session_state.page
 # =========================================================
@@ -242,9 +229,6 @@ def read_total_file(f):
     raw = pd.read_excel(f, header=None)
     meta = {}
     for c in raw.iloc[0, :]:
-        val = str(c) for c in raw.iloc[0, :]
-    # (kept original logic intact)
-    for c in raw.iloc[0, :]:
         val = str(c).strip()
         if ':' in val:
             k, v = val.split(':', 1)
@@ -303,7 +287,8 @@ def read_gaps_file(f):
     data[map_col] = pd.to_numeric(data[map_col], errors='coerce').fillna(0)
     data['Pct1'] = (data[internal_col] / max_total * 100).round(1) if max_total else 0.0
     data['Pct2'] = data[map_col].round(1)
-    return meta, data[['Student Name', 'Pct1', 'Pct2']]
+    data = data[['Student Name', 'Pct1', 'Pct2']]
+    return meta, data
 
 def read_section_file(f):
     meta, df = read_objectives_file(f)
@@ -356,7 +341,6 @@ elif page == "📊 Overview":
     with c1:
         st.subheader(t("📝 Objective Analysis"))
         st.write(t("Analyze one assessment at a time using learning objectives and student marks."))
-        st.markdown(t("- Calculate student totals and percentages.\n- Identify absent students.\n- Classify student achievement levels.\n- View bar and pie charts.\n- Download the final analysis as Excel."))
     with c2:
         st.subheader(t("📈 Class Total Average Analysis"))
         st.write(t("Compare multiple assessments for the same class and monitor the class average progress over time."))
@@ -391,7 +375,7 @@ elif page == "📝 Objective Analysis":
         m4.markdown(f"**{t('📝 Assessment:')}** {meta_info.get('Assessment name', 'N/A')}")
         st.markdown(f"### 📝 {t('Name:')} **{meta_info.get('Assessment name', 'N/A')}** | 📚 {t('Subject:')} **{meta_info.get('Subject', 'N/A')}**")
         raw = pd.read_excel(up_file, header=1)
-        if str(raw.iloc[0][0]).strip().lower() != "points for objectives":
+        if str(raw.iloc[0, 0]).strip().lower() != "points for objectives":
             desc_row = raw.iloc[0]
             raw_students = raw.iloc[1:].reset_index(drop=True)
         else:
@@ -464,7 +448,7 @@ elif page == "📝 Objective Analysis":
                 rdf = pd.DataFrame(res)
                 rdf['Support Level'] = rdf['Total %'].apply(support_level)
                 st.header(t("Step 2: Analysis Report"))
-                c1, c2, c3, c4, c5, c in st.columns(6) if False else c1, c2, c3, c4, c5, c6 = st.columns(6)
+                c1, c2, c3, c4, c5, c6 = st.columns(6)
                 cnt = rdf['Level'].value_counts().to_dict()
                 c1.metric(t("Absent"), cnt.get(t('Absent'), 0))
                 c2.metric(t("Fail"), cnt.get(t('Fail'), 0))
@@ -516,9 +500,8 @@ elif page == "📈 Class Total Average Analysis":
                 desc_row_g = raw_g.iloc[0]
             else:
                 desc_row_g = None
-            raw_check = raw_g
             obj_desc_g = {}
-            for c in raw_check.columns:
+            for c in raw_g.columns:
                 if c != 'Student Name':
                     if desc_row_g is not None:
                         d = str(desc_row_g[c]).strip()
@@ -613,6 +596,7 @@ elif page == "🗺️ MAP Analysis":
                 st.subheader(t("📊 Growth Distribution"))
                 st.plotly_chart(px.pie(status_count, names="Status", values="Count", hole=0.3), use_container_width=True)
             st.markdown("---")
+            st.subheader(t("Growth Distribution"))
             st.subheader(t("🎯 Student Percentile"))
             st.plotly_chart(px.bar(map_df, x="Student Name", y="Percentile", color="Support Level", range_y=[0, 100]), use_container_width=True)
             st.subheader(t("👥 Support Groups"))
@@ -663,7 +647,6 @@ elif page == "🎯 Achievement & Gaps":
         st.download_button(t("📊 Download Comparison Excel"), bufc.getvalue(), "Internal_MAP_Comparison.xlsx")
 
 elif page == "📑 Reports":
-    st.title(t("📑 Reports"))
     service = st.radio(t("Select Service"), [t("Compare between sections")], key="report_service")
     if service == t("Compare between sections"):
         st.header(t("🔍 Compare Between Sections"))
