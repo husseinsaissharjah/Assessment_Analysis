@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -59,37 +60,37 @@ TRANSLATIONS = {
         "See charts, gaps, and download reports.":
             "شاهد الرسوم البيانية والفجوات وقم بتحميل التقارير.",
         "Use the sidebar on the left to navigate to your analysis.":
-            "استخدم القائمة الجانبية للتنقل بين التحليلات.",
+            "استخدم القائمة الجانبية للتنقل بين أقسام التحليل.",
 
         # Overview
-        "📊 Assessment Analysis Overview": "📊 نظرة عامة على تحليل التقييم",
+        "📊 Assessment Analysis Overview":
+            "📊 نظرة عامة على تحليل التقييم",
         "The Assessment Analysis tool is designed to help teachers, coordinators, and school leaders analyze student achievement quickly and consistently.":
             "صممت أداة تحليل التقييم لمساعدة المعلمين والمنسقين وقادة المدارس على تحليل إنجاز الطلاب بسرعة وبطريقة متسقة.",
-
-        # Analysis
         "📝 Objective Analysis": "📝 تحليل الأهداف",
         "Analyze one assessment at a time using learning objectives and student marks.":
             "حلل تقييماً واحداً في كل مرة باستخدام أهداف التعلم وعلامات الطلاب.",
-
         "📈 Class Total Average Analysis": "📈 تحليل متوسط الصف",
         "Compare multiple assessments for the same class and monitor the class average progress over time.":
-            "قارن بين تقييمات متعددة لنفس الصف وراقب تطور متوسط الصف عبر الوقت.",
-
-        "🗺️ MAP Analysis": "🗺️ تحليل ماب",
+            "قارن بين تقييمات متعددة للصف نفسه وتابع تطور متوسط الصف مع مرور الوقت.",
         "🎯 Achievement & Gaps": "🎯 الإنجاز والفجوات",
         "Compare Internal Assessment results with MAP Percentile in one sheet to identify achievement gaps.":
-            "قارن نتائج التقييم الداخلي مع النسبة المئوية لماب لتحديد فجوات الإنجاز.",
+            "قارن نتائج التقييم الداخلي مع النسبة المئوية لاختبار MAP لتحديد فجوات الإنجاز.",
+        "🗺️ MAP Analysis": "🗺️ تحليل ماب",
 
-        # Labels
+        # General information
         "👩‍🏫 Teacher:": "👩‍🏫 المعلم:",
         "🏫 Class:": "🏫 الصف:",
         "📅 Date:": "📅 التاريخ:",
         "📝 Assessment:": "📝 التقييم:",
         "📚 Subject:": "📚 المادة:",
+        "Name:": "الاسم:",
         "Subject:": "المادة:",
         "Class": "الصف",
+        "Class:": "الصف:",
         "Info": "معلومات",
-        "Name:": "الاسم:",
+        "📋 Info": "📋 معلومات",
+        "📋 Assessment Information": "📋 معلومات التقييم",
 
         # Levels
         "Absent": "غائب",
@@ -111,31 +112,24 @@ TRANSLATIONS = {
         "Enrichment": "إثراء",
         "N/A": "غير متوفر",
         "Support Level": "مستوى الدعم",
-        "Students": "الطلاب",
 
         # Bands
         "Below 60% (Weak)": "أقل من 60% (ضعيف)",
         "60-75% (Acceptable)": "60-75% (مقبول)",
         "76-85% (Very Good)": "76-85% (جيد جداً)",
         "86-100% (Excellent)": "86-100% (ممتاز)",
+        "Below Acceptable": "أقل من المقبول",
 
         # Objective Analysis
         "Auto Total Max Mark": "الحد الأقصى للدرجات",
         "Objectives": "الأهداف",
         "Preview": "معاينة",
         "Analyze Assessment": "تحليل التقييم",
-        "Step 2: Analysis Report": "الخطوة 2: تقرير التحليل",
         "Step 1: Upload Student Marks Excel":
-            "الخطوة 1: تحميل ملف إكسل علامات الطلاب",
-        "Upload Excel": "تحميل إكسل",
-        "📊 Preview": "📊 معاينة",
-        "📊 Student Achievement": "📊 إنجاز الطالب",
-        "📊 Level Distribution": "📊 توزيع المستويات",
-        "🎯 Student Support Levels": "🎯 مستويات دعم الطالب",
-        "👥 Support Groups": "👥 مجموعات الدعم",
-        "📊 Download Excel": "📊 تحميل إكسل",
+            "الخطوة 1: تحميل إكسل علامات الطلاب",
+        "Step 2: Analysis Report":
+            "الخطوة 2: تقرير التحليل",
 
-        # Comparison
         "📊 Comparison Table (Percentage Based)":
             "📊 جدول المقارنة (حسب النسبة المئوية)",
         "📢 Summary": "📢 الملخص",
@@ -145,59 +139,120 @@ TRANSLATIONS = {
             "📈 اتجاه متوسط الدرجات (%)",
         "📈 Student Growth (Difference)":
             "📈 نمو الطالب (الفرق)",
-        "📈 Student Gap (Difference)":
-            "📈 فجوة الطالب (الفرق)",
+        "👥 Support Groups": "👥 مجموعات الدعم",
+        "🎯 Student Support Levels":
+            "🎯 مستويات دعم الطالب",
+        "📊 Student Achievement":
+            "📊 إنجاز الطالب",
+        "📊 Level Distribution":
+            "📊 توزيع المستويات",
+
+        # General buttons
+        "Upload Excel": "تحميل إكسل",
+        "📥 Download Excel Template":
+            "📥 تحميل قالب إكسل",
+        "📊 Download Excel":
+            "📊 تحميل إكسل",
+        "📊 Download Comparison Excel":
+            "📊 تحميل إكسل المقارنة",
 
         # MAP
-        "👥 Students": "👥 الطلاب",
-        "📉 Previous Avg RIT": "📉 متوسط ريت السابق",
-        "📈 Current Avg RIT": "📈 متوسط ريت الحالي",
-        "🚀 Average Growth": "🚀 متوسط النمو",
-        "🎯 Average Percentile": "🎯 متوسط النسبة المئوية",
-        "📈 Student Growth": "📈 نمو الطالب",
-        "📊 Growth Distribution": "📊 توزيع النمو",
-        "📋 Student MAP Analysis": "📋 تحليل الطالب في ماب",
-        "📥 Download MAP Analysis": "📥 تحميل تحليل ماب",
-        "📄 Upload MAP Data Excel": "📄 تحميل إكسل بيانات ماب",
-        "📋 MAP Data Preview": "📋 معاينة بيانات ماب",
-        "📊 MAP Summary": "📊 ملخص ماب",
-        "🎯 Student Percentile": "🎯 النسبة المئوية للطالب",
-        "Growth Distribution": "توزيع النمو",
+        "📄 Assessment": "📄 تقييم",
+        "📄 Upload MAP Data Excel":
+            "📄 تحميل إكسل بيانات ماب",
+        "📋 MAP Data Preview":
+            "📋 معاينة بيانات ماب",
+        "📊 MAP Summary":
+            "📊 ملخص ماب",
+        "👥 Students":
+            "👥 الطلاب",
+        "📉 Previous Avg RIT":
+            "📉 متوسط ريت السابق",
+        "📈 Current Avg RIT":
+            "📈 متوسط ريت الحالي",
+        "🚀 Average Growth":
+            "🚀 متوسط النمو",
+        "🎯 Average Percentile":
+            "🎯 متوسط النسبة المئوية",
+        "📈 Student Growth":
+            "📈 نمو الطالب",
+        "📊 Growth Distribution":
+            "📊 توزيع النمو",
+        "📋 Student MAP Analysis":
+            "📋 تحليل طالب ماب",
+        "📥 Download MAP Analysis":
+            "📥 تحميل تحليل ماب",
+        "Growth Distribution":
+            "توزيع النمو",
 
         # Achievement & Gaps
         "🎯 Achievement & Gaps (Internal vs MAP)":
-            "🎯 الإنجاز والفجوات (التقييم الداخلي مقابل ماب)",
-        "📄 Upload Single Sheet": "📄 تحميل ورقة واحدة",
+            "🎯 الإنجاز والفجوات (داخلي مقابل ماب)",
+        "📄 Upload Single Sheet":
+            "📄 تحميل ورقة واحدة",
+        "Status":
+            "الحالة",
+        "Count":
+            "العدد",
+        "Students":
+            "الطلاب",
 
         # Reports
-        "Select Service": "اختر الخدمة",
-        "Compare between sections": "مقارنة بين الأقسام",
-        "🔍 Compare Between Sections": "🔍 مقارنة بين الأقسام",
-        "Comparison Type": "نوع المقارنة",
-        "By Assessment Objectives": "حسب أهداف التقييم",
-        "By Assessment Total Mark": "حسب الدرجة الإجمالية",
+        "Select Service":
+            "اختر الخدمة",
+        "Compare between sections":
+            "مقارنة بين الأقسام",
+        "🔍 Compare Between Sections":
+            "🔍 مقارنة بين الأقسام",
+        "Comparison Type":
+            "نوع المقارنة",
+        "By Assessment Objectives":
+            "حسب أهداف التقييم",
+        "By Assessment Total Mark":
+            "حسب الدرجة الإجمالية",
         "By External Benchmark Assessment":
             "حسب تقييم المعيار الخارجي",
         "📚 By Assessment Objectives":
             "📚 حسب أهداف التقييم",
-        "Number of classes": "عدد الفصول",
-        "📄 Class": "📄 الصف",
-        "file": "ملف",
+        "Number of classes":
+            "عدد الفصول",
+        "📄 Class":
+            "📄 الصف",
+        "file":
+            "ملف",
         "📊 Band Distribution per Class":
-            "📊 توزيع المستويات لكل صف",
-        "✅ Comparison complete.": "✅ اكتملت المقارنة.",
+            "📊 توزيع الفئات لكل صف",
+        "Band":
+            "الفئة",
+        "✅ Comparison complete.":
+            "✅ اكتملت المقارنة.",
+
         "📊 By Assessment Total Mark":
             "📊 حسب الدرجة الإجمالية",
         "🏢 By External Benchmark Assessment":
             "🏢 حسب تقييم المعيار الخارجي",
 
-        # Misc
-        "Max": "الحد الأقصى",
-        "Below Acceptable": "أقل من المقبول",
-        "Status": "الحالة",
-        "Count": "العدد",
-        "Band": "المستوى",
-        "Assessment": "التقييم"
+        # Errors
+        "❌ Need 'Points for Objectives' row.":
+            "❌ يجب وجود صف 'Points for Objectives'.",
+        "🚫 Fix data entry:":
+            "🚫 يرجى تصحيح إدخال البيانات:",
+        "❌ File missing 'Points for Objectives' row.":
+            "❌ الملف يفتقد صف 'Points for Objectives'.",
+        "❌ File missing required rows/columns.":
+            "❌ الملف يفتقد الصفوف أو الأعمدة المطلوبة.",
+        "❌ Missing columns: ":
+            "❌ الأعمدة المفقودة: ",
+        "❌ Error reading MAP file: ":
+            "❌ خطأ في قراءة ملف ماب: ",
+        "❌ Class file invalid":
+            "❌ ملف الصف غير صالح",
+
+        # Other
+        "📋 Preview":
+            "📋 معاينة",
+        "Max":
+            "الحد الأقصى"
     }
 }
 
@@ -208,63 +263,58 @@ TRANSLATIONS = {
 
 def t(text):
     return TRANSLATIONS.get(
-        st.session_state.lang, {}
+        st.session_state.lang,
+        {}
     ).get(text, text)
 
 
 # =========================================================
-# LANGUAGE SWITCH - TOP OF PAGE
+# GLOBAL CSS
 # =========================================================
 
-# RTL / LTR
-if st.session_state.lang == "Arabic":
-    direction = "rtl"
-    text_align = "right"
-else:
-    direction = "ltr"
-    text_align = "left"
-
 st.markdown(
-    f"""
+    """
     <style>
 
-    .language-container {{
-        direction: ltr;
-        text-align: center;
-        margin-bottom: 10px;
-    }}
+    /* ==========================================
+       SIDEBAR NAVIGATION
+       ========================================== */
 
-    .language-title {{
-        font-size: 0.95rem;
-        font-weight: 600;
-        text-align: center;
-        margin-bottom: 5px;
-    }}
-
-    .main-content {{
-        direction: {direction};
-        text-align: {text_align};
-    }}
-
-    /* Sidebar buttons */
-    [data-testid="stSidebar"] .stButton {{
+    [data-testid="stSidebar"] .stButton {
         width: 100%;
-    }}
+    }
 
-    [data-testid="stSidebar"] .stButton button {{
+    [data-testid="stSidebar"] .stButton button {
         border: none !important;
         border-radius: 0 !important;
         box-shadow: none !important;
-        background-color: transparent;
+        background-color: transparent !important;
         width: 100%;
-        text-align: left;
         padding: 0.5rem 0.75rem;
         font-size: 1rem;
-    }}
+    }
 
-    [data-testid="stSidebar"] .stButton button:hover {{
-        background-color: rgba(128, 128, 128, 0.2);
-    }}
+    [data-testid="stSidebar"] .stButton button:hover {
+        background-color: rgba(128, 128, 128, 0.2) !important;
+    }
+
+    /* ==========================================
+       TOP LANGUAGE BUTTON
+       ========================================== */
+
+    .language-switch button {
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }
+
+    /* ==========================================
+       ARABIC RTL
+       ========================================== */
+
+    .arabic-page {
+        direction: rtl;
+        text-align: right;
+    }
 
     </style>
     """,
@@ -273,37 +323,91 @@ st.markdown(
 
 
 # =========================================================
-# TOP LANGUAGE BUTTONS
+# TOP LANGUAGE SWITCHER
+# =========================================================
+#
+# IMPORTANT:
+# This is intentionally OUTSIDE the sidebar.
+# Therefore it appears at the top of the main application.
 # =========================================================
 
-st.markdown(
-    '<div class="language-container">'
-    '<div class="language-title">🌐 Language / اللغة</div>'
-    '</div>',
-    unsafe_allow_html=True
-)
+top_space1, top_space2, language_col = st.columns([6, 2, 1])
 
-lang_c1, lang_c2, lang_c3 = st.columns([2, 1, 1])
+with language_col:
 
-with lang_c2:
-    if st.button(
-        "🇬🇧 English",
-        use_container_width=True,
-        key="top_lang_en"
-    ):
-        st.session_state.lang = "English"
-        st.rerun()
+    if st.session_state.lang == "English":
 
-with lang_c3:
-    if st.button(
-        "🇱🇧 العربية",
-        use_container_width=True,
-        key="top_lang_ar"
-    ):
-        st.session_state.lang = "Arabic"
-        st.rerun()
+        if st.button(
+            "🇱🇧 العربية",
+            key="top_language_arabic",
+            use_container_width=True
+        ):
+            st.session_state.lang = "Arabic"
+            st.rerun()
 
-st.markdown("---")
+    else:
+
+        if st.button(
+            "🇬🇧 English",
+            key="top_language_english",
+            use_container_width=True
+        ):
+            st.session_state.lang = "English"
+            st.rerun()
+
+
+# =========================================================
+# RTL FOR ARABIC
+# =========================================================
+
+if st.session_state.lang == "Arabic":
+
+    st.markdown(
+        """
+        <style>
+
+        .main .block-container {
+            direction: rtl;
+            text-align: right;
+        }
+
+        [data-testid="stSidebar"] {
+            direction: rtl;
+        }
+
+        [data-testid="stSidebar"] .stButton button {
+            text-align: right !important;
+        }
+
+        [data-testid="stSidebar"] .stMarkdown {
+            direction: rtl;
+            text-align: right;
+        }
+
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+else:
+
+    st.markdown(
+        """
+        <style>
+
+        .main .block-container {
+            direction: ltr;
+            text-align: left;
+        }
+
+        [data-testid="stSidebar"] {
+            direction: ltr;
+        }
+
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 
 # =========================================================
@@ -411,7 +515,7 @@ def support_level(pct):
 
 
 # =========================================================
-# OBJECTIVES TEMPLATE
+# EXCEL TEMPLATES
 # =========================================================
 
 def objectives_template():
@@ -484,10 +588,6 @@ def objectives_template():
     return buffer.getvalue()
 
 
-# =========================================================
-# TOTAL TEMPLATE
-# =========================================================
-
 def total_template():
 
     data = [
@@ -535,10 +635,6 @@ def total_template():
 
     return buffer.getvalue()
 
-
-# =========================================================
-# GAPS TEMPLATE
-# =========================================================
 
 def gaps_template():
 
@@ -593,10 +689,6 @@ def gaps_template():
     return buffer.getvalue()
 
 
-# =========================================================
-# MAP TEMPLATE
-# =========================================================
-
 def map_template():
 
     data = {
@@ -638,7 +730,7 @@ def map_template():
 
 
 # =========================================================
-# READ OBJECTIVES FILE
+# FILE READING FUNCTIONS
 # =========================================================
 
 def read_objectives_file(f):
@@ -673,20 +765,25 @@ def read_objectives_file(f):
         header=1
     )
 
-    if str(
-        df.iloc[0, 0]
-    ).strip().lower() != "points for objectives":
+    if (
+        str(
+            df.iloc[0, 0]
+        ).strip().lower()
+        != "points for objectives"
+    ):
 
         df = df.iloc[1:].reset_index(
             drop=True
         )
 
-    mask = df.iloc[:, 0].astype(
-        str
-    ).str.contains(
-        "Points for Objectives",
-        case=False,
-        na=False
+    mask = (
+        df.iloc[:, 0]
+        .astype(str)
+        .str.contains(
+            "Points for Objectives",
+            case=False,
+            na=False
+        )
     )
 
     if not mask.any():
@@ -729,9 +826,7 @@ def read_objectives_file(f):
 
     obj_cols = valid_cols
 
-    df = df[
-        ~mask
-    ].copy()
+    df = df[~mask].copy()
 
     df = df.dropna(
         subset=[df.columns[0]]
@@ -739,7 +834,8 @@ def read_objectives_file(f):
 
     df = df.rename(
         columns={
-            df.columns[0]: "Student Name"
+            df.columns[0]:
+            "Student Name"
         }
     )
 
@@ -756,34 +852,20 @@ def read_objectives_file(f):
             errors="coerce"
         ).fillna(0)
 
-    if obj_cols:
+    df["Obtained"] = (
+        df[obj_cols].sum(axis=1)
+        if obj_cols
+        else 0
+    )
 
-        df["Obtained"] = df[
-            obj_cols
-        ].sum(axis=1)
-
-    else:
-
-        df["Obtained"] = 0
-
-    if total_max:
-
-        df["Pct"] = (
-            df["Obtained"]
-            / total_max
-            * 100
-        ).round(1)
-
-    else:
-
-        df["Pct"] = 0.0
+    df["Pct"] = (
+        df["Obtained"]
+        / total_max
+        * 100
+    ).round(1) if total_max else 0.0
 
     return meta, df
 
-
-# =========================================================
-# READ TOTAL FILE
-# =========================================================
 
 def read_total_file(f):
 
@@ -819,9 +901,12 @@ def read_total_file(f):
         len(raw)
     ):
 
-        if "total" in str(
-            raw.iloc[i, 0]
-        ).lower():
+        if (
+            "total"
+            in str(
+                raw.iloc[i, 0]
+            ).lower()
+        ):
 
             total_idx = i
             break
@@ -836,9 +921,7 @@ def read_total_file(f):
                 1
             ]
         )
-
     except:
-
         max_total = 100.0
 
     data = raw.iloc[
@@ -878,24 +961,14 @@ def read_total_file(f):
         errors="coerce"
     ).fillna(0)
 
-    if max_total:
-
-        data["Pct"] = (
-            data[total_col]
-            / max_total
-            * 100
-        ).round(1)
-
-    else:
-
-        data["Pct"] = 0.0
+    data["Pct"] = (
+        data[total_col]
+        / max_total
+        * 100
+    ).round(1) if max_total else 0.0
 
     return meta, data
 
-
-# =========================================================
-# READ GAPS FILE
-# =========================================================
 
 def read_gaps_file(f):
 
@@ -931,9 +1004,12 @@ def read_gaps_file(f):
         len(raw)
     ):
 
-        if "over" in str(
-            raw.iloc[i, 0]
-        ).lower():
+        if (
+            "over"
+            in str(
+                raw.iloc[i, 0]
+            ).lower()
+        ):
 
             total_idx = i
             break
@@ -942,16 +1018,13 @@ def read_gaps_file(f):
         return None, None
 
     try:
-
         max_total = float(
             raw.iloc[
                 total_idx,
                 1
             ]
         )
-
     except:
-
         max_total = 100.0
 
     data = raw.iloc[
@@ -1004,17 +1077,11 @@ def read_gaps_file(f):
         errors="coerce"
     ).fillna(0)
 
-    if max_total:
-
-        data["Pct1"] = (
-            data[internal_col]
-            / max_total
-            * 100
-        ).round(1)
-
-    else:
-
-        data["Pct1"] = 0.0
+    data["Pct1"] = (
+        data[internal_col]
+        / max_total
+        * 100
+    ).round(1) if max_total else 0.0
 
     data["Pct2"] = data[
         map_col
@@ -1030,10 +1097,6 @@ def read_gaps_file(f):
 
     return meta, data
 
-
-# =========================================================
-# READ SECTION FILE
-# =========================================================
 
 def read_section_file(f):
 
@@ -1055,9 +1118,12 @@ def read_section_file(f):
         header=1
     )
 
-    if str(
-        raw_full.iloc[0, 0]
-    ).strip().lower() != "points for objectives":
+    if (
+        str(
+            raw_full.iloc[0, 0]
+        ).strip().lower()
+        != "points for objectives"
+    ):
 
         desc_row = raw_full.iloc[0]
         max_row = raw_full.iloc[1]
@@ -1082,13 +1148,10 @@ def read_section_file(f):
     for c in obj_names:
 
         try:
-
             mx = float(
                 max_row[c]
             )
-
         except:
-
             mx = 0
 
         obj_max[c] = mx
@@ -1103,11 +1166,9 @@ def read_section_file(f):
                 d == ""
                 or d.lower() == "nan"
             ):
-
                 d = str(c)
 
         else:
-
             d = str(c)
 
         obj_desc[c] = d
@@ -1122,23 +1183,12 @@ def read_section_file(f):
 
 
 # =========================================================
-# MAIN CONTENT
-# =========================================================
-
-st.markdown(
-    '<div class="main-content">',
-    unsafe_allow_html=True
-)
-
-
-# =========================================================
 # HOME
 # =========================================================
 
 if page == "🏠 Home":
 
     if os.path.exists("logo.png"):
-
         st.image(
             "logo.png",
             width=120
@@ -1212,9 +1262,7 @@ if page == "🏠 Home":
 elif page == "📊 Overview":
 
     st.title(
-        t(
-            "📊 Assessment Analysis Overview"
-        )
+        t("📊 Assessment Analysis Overview")
     )
 
     st.markdown(
@@ -1242,9 +1290,7 @@ elif page == "📊 Overview":
     with c2:
 
         st.subheader(
-            t(
-                "📈 Class Total Average Analysis"
-            )
+            t("📈 Class Total Average Analysis")
         )
 
         st.write(
@@ -1298,9 +1344,7 @@ elif page == "📝 Objective Analysis":
     st.markdown("---")
 
     st.header(
-        t(
-            "Step 1: Upload Student Marks Excel"
-        )
+        t("Step 1: Upload Student Marks Excel")
     )
 
     st.info(
@@ -1345,7 +1389,9 @@ elif page == "📝 Objective Analysis":
                     1
                 )
 
-                meta_info[k.strip()] = v.strip()
+                meta_info[
+                    k.strip()
+                ] = v.strip()
 
         st.subheader(
             t("📋 Info")
@@ -1385,16 +1431,18 @@ elif page == "📝 Objective Analysis":
             header=1
         )
 
-        if str(
-            raw.iloc[0, 0]
-        ).strip().lower() != "points for objectives":
+        if (
+            str(
+                raw.iloc[0, 0]
+            ).strip().lower()
+            != "points for objectives"
+        ):
 
             desc_row = raw.iloc[0]
 
-            raw_students = raw.iloc[
-                1:
-            ].reset_index(
-                drop=True
+            raw_students = (
+                raw.iloc[1:]
+                .reset_index(drop=True)
             )
 
         else:
@@ -1418,7 +1466,6 @@ elif page == "📝 Objective Analysis":
                         d == ""
                         or d.lower() == "nan"
                     ):
-
                         d = str(c)
 
                 else:
@@ -1432,19 +1479,22 @@ elif page == "📝 Objective Analysis":
             if c != "Student Name"
         ]
 
-        mask = raw_students.iloc[
-            :,
-            0
-        ].astype(str).str.contains(
-            "Points for Objectives",
-            case=False,
-            na=False
+        mask = (
+            raw_students.iloc[:, 0]
+            .astype(str)
+            .str.contains(
+                "Points for Objectives",
+                case=False,
+                na=False
+            )
         )
 
         if not mask.any():
 
             st.error(
-                "❌ Need 'Points for Objectives' row."
+                t(
+                    "❌ Need 'Points for Objectives' row."
+                )
             )
 
             st.stop()
@@ -1472,11 +1522,8 @@ elif page == "📝 Objective Analysis":
             ):
 
                 try:
-
                     mx = float(mx_raw)
-
                 except:
-
                     mx = 0.0
 
                 if mx > 0:
@@ -1484,12 +1531,12 @@ elif page == "📝 Objective Analysis":
                     obj_names.append(c)
                     obj_max.append(mx)
 
-        student_df = raw_students[
-            ~mask
-        ].copy()
-
-        student_df = student_df.dropna(
-            subset=["Student Name"]
+        student_df = (
+            raw_students[~mask]
+            .copy()
+            .dropna(
+                subset=["Student Name"]
+            )
         )
 
         student_df = student_df[
@@ -1592,9 +1639,8 @@ elif page == "📝 Objective Analysis":
         if errors:
 
             st.error(
-                "🚫 "
-                + t("Fix data entry")
-                + ":\n"
+                t("🚫 Fix data entry:")
+                + "\n"
                 + "\n".join(errors)
             )
 
@@ -1611,27 +1657,27 @@ elif page == "📝 Objective Analysis":
 
                     if row["Absent"]:
 
-                        res.append({
-                            "Student Name":
-                                row["Student Name"],
-                            "Total": "-",
-                            "Total %": None,
-                            "Level":
-                                t("Absent")
-                        })
+                        res.append(
+                            {
+                                "Student Name":
+                                    row["Student Name"],
+                                "Total":
+                                    "-",
+                                "Total %":
+                                    None,
+                                "Level":
+                                    t("Absent")
+                            }
+                        )
 
                         continue
 
                     ps = []
                     tot = 0
 
-                    for j, c in enumerate(
-                        obj_names
-                    ):
+                    for j, c in enumerate(obj_names):
 
-                        mk = float(
-                            row[c]
-                        )
+                        mk = float(row[c])
 
                         tot += mk
 
@@ -1639,8 +1685,7 @@ elif page == "📝 Objective Analysis":
                             (
                                 mk
                                 / obj_max[j]
-                            )
-                            * 100
+                            ) * 100
                             if obj_max[j]
                             else 0
                         )
@@ -1667,16 +1712,18 @@ elif page == "📝 Objective Analysis":
                     else:
                         lvl = t("Outstanding")
 
-                    res.append({
-                        "Student Name":
-                            row["Student Name"],
-                        "Total":
-                            tot,
-                        "Total %":
-                            round(tp, 1),
-                        "Level":
-                            lvl
-                    })
+                    res.append(
+                        {
+                            "Student Name":
+                                row["Student Name"],
+                            "Total":
+                                tot,
+                            "Total %":
+                                round(tp, 1),
+                            "Level":
+                                lvl
+                        }
+                    )
 
                 rdf = pd.DataFrame(res)
 
@@ -1686,9 +1733,7 @@ elif page == "📝 Objective Analysis":
                 )
 
                 st.header(
-                    t(
-                        "Step 2: Analysis Report"
-                    )
+                    t("Step 2: Analysis Report")
                 )
 
                 c1, c2, c3, c4, c5, c6 = st.columns(6)
@@ -1749,29 +1794,32 @@ elif page == "📝 Objective Analysis":
 
                 ts = len(rdf)
 
-                valid_pct = rdf[
-                    "Total %"
-                ].dropna()
+                ge60 = (
+                    (rdf["Total %"] >= 60)
+                    .sum()
+                    / ts
+                    * 100
+                    if ts
+                    else 0
+                )
 
-                if len(valid_pct):
+                gt60 = (
+                    (rdf["Total %"] > 60)
+                    .sum()
+                    / ts
+                    * 100
+                    if ts
+                    else 0
+                )
 
-                    ge60 = (
-                        valid_pct >= 60
-                    ).sum() / len(valid_pct) * 100
-
-                    gt60 = (
-                        valid_pct > 60
-                    ).sum() / len(valid_pct) * 100
-
-                    gt75 = (
-                        valid_pct > 75
-                    ).sum() / len(valid_pct) * 100
-
-                else:
-
-                    ge60 = 0
-                    gt60 = 0
-                    gt75 = 0
+                gt75 = (
+                    (rdf["Total %"] > 75)
+                    .sum()
+                    / ts
+                    * 100
+                    if ts
+                    else 0
+                )
 
                 if gt75 >= 90:
                     ov = t("Outstanding")
@@ -1822,18 +1870,14 @@ elif page == "📝 Objective Analysis":
                 with v1:
 
                     st.subheader(
-                        t(
-                            "📊 Student Achievement"
-                        )
-                    )
-
-                    chart_df = rdf.dropna(
-                        subset=["Total %"]
+                        t("📊 Student Achievement")
                     )
 
                     st.plotly_chart(
                         px.bar(
-                            chart_df,
+                            rdf.dropna(
+                                subset=["Total %"]
+                            ),
                             x="Student Name",
                             y="Total %",
                             color="Level",
@@ -1845,9 +1889,7 @@ elif page == "📝 Objective Analysis":
                 with v2:
 
                     st.subheader(
-                        t(
-                            "📊 Level Distribution"
-                        )
+                        t("📊 Level Distribution")
                     )
 
                     st.plotly_chart(
@@ -1856,25 +1898,21 @@ elif page == "📝 Objective Analysis":
                             names="Level",
                             values="Count",
                             color="Level",
-                            color_discrete_map={
-                                t(k): v
-                                for k, v
-                                in COLORS.items()
-                            },
+                            color_discrete_map=COLORS,
                             hole=0.3
                         ),
                         use_container_width=True
                     )
 
                 st.subheader(
-                    t(
-                        "🎯 Student Support Levels"
-                    )
+                    t("🎯 Student Support Levels")
                 )
 
                 st.plotly_chart(
                     px.bar(
-                        chart_df,
+                        rdf.dropna(
+                            subset=["Total %"]
+                        ),
                         x="Student Name",
                         y="Total %",
                         color="Support Level",
@@ -1884,9 +1922,7 @@ elif page == "📝 Objective Analysis":
                 )
 
                 support_count = (
-                    rdf[
-                        "Support Level"
-                    ]
+                    rdf["Support Level"]
                     .value_counts()
                     .reset_index()
                 )
@@ -1931,9 +1967,7 @@ elif page == "📝 Objective Analysis":
 elif page == "📈 Class Total Average Analysis":
 
     st.header(
-        t(
-            "📈 Class Total Average Analysis"
-        )
+        t("📈 Class Total Average Analysis")
     )
 
     st.download_button(
@@ -2001,9 +2035,12 @@ elif page == "📈 Class Total Average Analysis":
                 header=1
             )
 
-            if str(
-                raw_g.iloc[0, 0]
-            ).strip().lower() != "points for objectives":
+            if (
+                str(
+                    raw_g.iloc[0, 0]
+                ).strip().lower()
+                != "points for objectives"
+            ):
 
                 desc_row_g = raw_g.iloc[0]
 
@@ -2027,7 +2064,6 @@ elif page == "📈 Class Total Average Analysis":
                             d == ""
                             or d.lower() == "nan"
                         ):
-
                             d = str(c)
 
                     else:
@@ -2052,7 +2088,10 @@ elif page == "📈 Class Total Average Analysis":
             col = f"Pct{i + 1}"
 
             keep = df[
-                ["Student Name", "Pct"]
+                [
+                    "Student Name",
+                    "Pct"
+                ]
             ].rename(
                 columns={
                     "Pct": col
@@ -2103,11 +2142,13 @@ elif page == "📈 Class Total Average Analysis":
             merged["Difference"]
             .apply(
                 lambda d:
-                t("Growth")
-                if d > 0.5
-                else t("Decay")
-                if d < -0.5
-                else t("Same")
+                    t("Growth")
+                    if d > 0.5
+                    else
+                    t("Decay")
+                    if d < -0.5
+                    else
+                    t("Same")
             )
         )
 
@@ -2172,18 +2213,20 @@ elif page == "📈 Class Total Average Analysis":
             sc
         )
 
-        cd = pd.DataFrame({
-            "Status": [
-                t("Growth"),
-                t("Decay"),
-                t("Same")
-            ],
-            "Count": [
-                gc,
-                dc,
-                sc
-            ]
-        })
+        cd = pd.DataFrame(
+            {
+                "Status": [
+                    t("Growth"),
+                    t("Decay"),
+                    t("Same")
+                ],
+                "Count": [
+                    gc,
+                    dc,
+                    sc
+                ]
+            }
+        )
 
         cd["Status"] = pd.Categorical(
             cd["Status"],
@@ -2266,9 +2309,7 @@ elif page == "📈 Class Total Average Analysis":
         )
 
         st.subheader(
-            t(
-                "📈 Average Score Trend (%)"
-            )
+            t("📈 Average Score Trend (%)")
         )
 
         st.plotly_chart(
@@ -2282,9 +2323,7 @@ elif page == "📈 Class Total Average Analysis":
         )
 
         st.subheader(
-            t(
-                "📈 Student Growth (Difference)"
-            )
+            t("📈 Student Growth (Difference)")
         )
 
         st.plotly_chart(
@@ -2325,7 +2364,7 @@ elif page == "📈 Class Total Average Analysis":
         )
 
         st.download_button(
-            t("📊 Download Comparison Excel"),
+            "📊 Download Comparison Excel",
             bufc.getvalue(),
             "Comparison.xlsx"
         )
@@ -2418,18 +2457,30 @@ elif page == "🗺️ MAP Analysis":
                 map_df["RIT Growth"]
                 .apply(
                     lambda x:
-                    t("Growth")
-                    if x > 0
-                    else t("Decay")
-                    if x < 0
-                    else t("Same")
+                        t("Growth")
+                        if x > 0
+                        else
+                        t("Decay")
+                        if x < 0
+                        else
+                        t("Same")
                 )
             )
 
             map_df["Support Level"] = (
                 map_df["Percentile"]
                 .apply(
-                    support_level
+                    lambda x:
+                        t("Intervention")
+                        if x < 25
+                        else
+                        t("Monitor")
+                        if x < 50
+                        else
+                        t("On Track")
+                        if x < 75
+                        else
+                        t("Enrichment")
                 )
             )
 
@@ -2452,21 +2503,25 @@ elif page == "🗺️ MAP Analysis":
                 map_df
             )
 
-            avg_previous = map_df[
-                "Previous RIT"
-            ].mean()
+            avg_previous = (
+                map_df["Previous RIT"]
+                .mean()
+            )
 
-            avg_current = map_df[
-                "Current RIT"
-            ].mean()
+            avg_current = (
+                map_df["Current RIT"]
+                .mean()
+            )
 
-            avg_growth = map_df[
-                "RIT Growth"
-            ].mean()
+            avg_growth = (
+                map_df["RIT Growth"]
+                .mean()
+            )
 
-            avg_percentile = map_df[
-                "Percentile"
-            ].mean()
+            avg_percentile = (
+                map_df["Percentile"]
+                .mean()
+            )
 
             c1, c2, c3, c4 = st.columns(4)
 
@@ -2477,49 +2532,35 @@ elif page == "🗺️ MAP Analysis":
 
             c2.metric(
                 t("📉 Previous Avg RIT"),
-                round(
-                    avg_previous,
-                    1
-                )
+                round(avg_previous, 1)
             )
 
             c3.metric(
                 t("📈 Current Avg RIT"),
-                round(
-                    avg_current,
-                    1
-                )
+                round(avg_current, 1)
             )
 
             c4.metric(
                 t("🚀 Average Growth"),
-                round(
-                    avg_growth,
-                    1
-                )
+                round(avg_growth, 1)
             )
 
             st.metric(
                 t("🎯 Average Percentile"),
-                round(
-                    avg_percentile,
-                    1
-                )
+                round(avg_percentile, 1)
             )
 
             st.markdown("---")
 
             status_count = (
-                map_df[
-                    "Growth Status"
-                ]
+                map_df["Growth Status"]
                 .value_counts()
                 .reset_index()
             )
 
             status_count.columns = [
-                "Status",
-                "Count"
+                t("Status"),
+                t("Count")
             ]
 
             v1, v2 = st.columns(2)
@@ -2549,8 +2590,8 @@ elif page == "🗺️ MAP Analysis":
                 st.plotly_chart(
                     px.pie(
                         status_count,
-                        names="Status",
-                        values="Count",
+                        names=t("Status"),
+                        values=t("Count"),
                         hole=0.3
                     ),
                     use_container_width=True
@@ -2582,9 +2623,7 @@ elif page == "🗺️ MAP Analysis":
             )
 
             support_count = (
-                map_df[
-                    "Support Level"
-                ]
+                map_df["Support Level"]
                 .value_counts()
                 .reset_index()
             )
@@ -2606,9 +2645,7 @@ elif page == "🗺️ MAP Analysis":
             st.dataframe(
                 map_df.style.map(
                     color_cell,
-                    subset=[
-                        "Growth Status"
-                    ]
+                    subset=["Growth Status"]
                 ),
                 use_container_width=True
             )
@@ -2621,9 +2658,7 @@ elif page == "🗺️ MAP Analysis":
             )
 
             st.download_button(
-                t(
-                    "📥 Download MAP Analysis"
-                ),
+                t("📥 Download MAP Analysis"),
                 map_buffer.getvalue(),
                 "MAP_Analysis_Report.xlsx"
             )
@@ -2690,11 +2725,13 @@ elif page == "🎯 Achievement & Gaps":
             df["Difference"]
             .apply(
                 lambda d:
-                t("Growth")
-                if d > 0.5
-                else t("Decay")
-                if d < -0.5
-                else t("Same")
+                    t("Growth")
+                    if d > 0.5
+                    else
+                    t("Decay")
+                    if d < -0.5
+                    else
+                    t("Same")
             )
         )
 
@@ -2759,18 +2796,20 @@ elif page == "🎯 Achievement & Gaps":
             sc
         )
 
-        cd = pd.DataFrame({
-            "Status": [
-                t("Growth"),
-                t("Decay"),
-                t("Same")
-            ],
-            "Count": [
-                gc,
-                dc,
-                sc
-            ]
-        })
+        cd = pd.DataFrame(
+            {
+                "Status": [
+                    t("Growth"),
+                    t("Decay"),
+                    t("Same")
+                ],
+                "Count": [
+                    gc,
+                    dc,
+                    sc
+                ]
+            }
+        )
 
         cd["Status"] = pd.Categorical(
             cd["Status"],
@@ -2834,9 +2873,7 @@ elif page == "🎯 Achievement & Gaps":
             )
 
         st.subheader(
-            t(
-                "📈 Student Gap (Difference)"
-            )
+            t("📈 Student Gap (Difference)")
         )
 
         st.plotly_chart(
@@ -2877,9 +2914,7 @@ elif page == "🎯 Achievement & Gaps":
         )
 
         st.download_button(
-            t(
-                "📊 Download Comparison Excel"
-            ),
+            t("📊 Download Comparison Excel"),
             bufc.getvalue(),
             "Internal_MAP_Comparison.xlsx"
         )
@@ -2904,9 +2939,7 @@ elif page == "📑 Reports":
     ):
 
         st.header(
-            t(
-                "🔍 Compare Between Sections"
-            )
+            t("🔍 Compare Between Sections")
         )
 
         comp_type = st.radio(
@@ -2919,9 +2952,9 @@ elif page == "📑 Reports":
             key="comparison_type"
         )
 
-        # =================================================
-        # BY OBJECTIVES
-        # =================================================
+        # =====================================================
+        # COMPARE BY ASSESSMENT OBJECTIVES
+        # =====================================================
 
         if comp_type == t(
             "By Assessment Objectives"
@@ -2940,7 +2973,10 @@ elif page == "📑 Reports":
                 st.file_uploader(
                     f"📄 {t('Class')} {i + 1} "
                     f"{t('file')}",
-                    type=["xlsx", "xls"],
+                    type=[
+                        "xlsx",
+                        "xls"
+                    ],
                     key=f"secfile_{i}"
                 )
                 for i in range(
@@ -2981,8 +3017,9 @@ elif page == "📑 Reports":
                     )
 
                     st.markdown(
-                        f"### 📋 {t('Class')} "
-                        f"{idx} {t('Info')}"
+                        f"### 📋 "
+                        f"{t('Class')} {idx} "
+                        f"{t('Info')}"
                     )
 
                     m1, m2, m3, m4 = st.columns(4)
@@ -3041,29 +3078,33 @@ elif page == "📑 Reports":
 
                     obj_avg = {
                         c:
-                        (
-                            df[c]
-                            / obj_max[c]
-                            * 100
-                        ).mean()
-                        if obj_max[c] > 0
-                        else 0
+                            (
+                                df[c]
+                                / obj_max[c]
+                                * 100
+                            ).mean()
+                            if obj_max[c] > 0
+                            else 0
                         for c in obj_names
                     }
 
-                    sections_data.append({
-                        "name": class_name,
-                        "df": df,
-                        "bands":
-                            df["Band"]
-                            .value_counts(),
-                        "obj_avg":
-                            obj_avg,
-                        "obj_names":
-                            obj_names,
-                        "obj_desc":
-                            obj_desc
-                    })
+                    sections_data.append(
+                        {
+                            "name":
+                                class_name,
+                            "df":
+                                df,
+                            "bands":
+                                df["Band"]
+                                .value_counts(),
+                            "obj_avg":
+                                obj_avg,
+                            "obj_names":
+                                obj_names,
+                            "obj_desc":
+                                obj_desc
+                        }
+                    )
 
                 band_order = [
                     t(x)
@@ -3137,40 +3178,8 @@ elif page == "📑 Reports":
                     )
                 )
 
-        # =================================================
-        # OTHER REPORT TYPES
-        # =================================================
-
-        elif comp_type == t(
-            "By Assessment Total Mark"
-        ):
-
-            st.info(
-                t(
-                    "📊 By Assessment Total Mark"
-                )
-                + " — "
-                + "This section is ready for the total-mark comparison."
-            )
-
-        elif comp_type == t(
-            "By External Benchmark Assessment"
-        ):
-
-            st.info(
-                t(
-                    "🏢 By External Benchmark Assessment"
-                )
-                + " — "
-                + "This section is ready for the external benchmark comparison."
-            )
-
 
 # =========================================================
-# CLOSE MAIN CONTENT
+# END OF APP
 # =========================================================
-
-st.markdown(
-    "</div>",
-    unsafe_allow_html=True
-)
+```
