@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import io
 import os
 
@@ -731,15 +732,12 @@ def read_objectives_file(file):
 
         df = df[keep_columns].copy()
 
-        # IMPORTANT:
-        # Do not convert missing/absent marks to zero here.
         for column in valid_cols:
             df[column] = pd.to_numeric(
                 df[column],
                 errors="coerce"
             )
 
-        # Calculate total only for available numeric marks.
         df["Obtained"] = df[valid_cols].sum(
             axis=1,
             min_count=1
@@ -986,7 +984,8 @@ def read_section_file(file):
             .astype(str)
             .str.strip()
             .str.lower()
-            == "points for objectives"
+            ==
+            "points for objectives"
         )
 
         if points_mask.any():
@@ -1332,7 +1331,8 @@ elif page == "📝 Objective Analysis":
             .astype(str)
             .str.strip()
             .str.lower()
-            == "points for objectives"
+            ==
+            "points for objectives"
         )
 
         if not mask.any():
@@ -1422,8 +1422,6 @@ elif page == "📝 Objective Analysis":
             axis=1
         )
 
-        # Convert numeric marks.
-        # Absent marks remain NaN and are NOT converted to zero.
         for column in obj_names:
 
             student_df[column] = pd.to_numeric(
@@ -1516,9 +1514,6 @@ elif page == "📝 Objective Analysis":
                 # =================================================
                 for _, row in student_df.iterrows():
 
-                    # ---------------------------------------------
-                    # ABSENT STUDENT
-                    # ---------------------------------------------
                     if row["Absent"]:
 
                         results.append(
@@ -1536,22 +1531,6 @@ elif page == "📝 Objective Analysis":
 
                         continue
 
-                    # ---------------------------------------------
-                    # CALCULATE PERCENTAGE
-                    #
-                    # IMPORTANT:
-                    # Each student is normalized according to the
-                    # maximum marks of the objectives that actually
-                    # have a mark.
-                    #
-                    # Example:
-                    # Objective totals = 10 + 15 + 5 = 30
-                    # Student obtains 8 + 12 + 4 = 24
-                    # Percentage = 24 / 30 * 100 = 80%
-                    #
-                    # This works whether the assessment total is
-                    # 15, 20, 30, 40, 50, etc.
-                    # ---------------------------------------------
                     total_obtained = 0.0
                     total_possible_for_student = 0.0
 
@@ -1561,7 +1540,6 @@ elif page == "📝 Objective Analysis":
 
                         mark = row[column]
 
-                        # Ignore missing objective marks.
                         if pd.isna(mark):
                             continue
 
@@ -1583,14 +1561,6 @@ elif page == "📝 Objective Analysis":
                     else:
                         total_percentage = None
 
-                    # ---------------------------------------------
-                    # ACHIEVEMENT LEVELS
-                    #
-                    # < 60%       = Fail
-                    # 60% - 75%   = Acceptable
-                    # 76% - 84%   = Good
-                    # 85%+        = Excellent
-                    # ---------------------------------------------
                     if total_percentage is None:
 
                         level = t("N/A")
@@ -1643,18 +1613,12 @@ elif page == "📝 Objective Analysis":
                     t("Step 2: Analysis Report")
                 )
 
-                # =================================================
-                # LEVEL COUNTS
-                # =================================================
                 counts = (
                     rdf["Level"]
                     .value_counts()
                     .to_dict()
                 )
 
-                # =================================================
-                # ACHIEVEMENT METRICS
-                # =================================================
                 c1, c2, c3, c4, c5 = st.columns(5)
 
                 c1.metric(
@@ -1697,10 +1661,6 @@ elif page == "📝 Objective Analysis":
                     )
                 )
 
-                # =================================================
-                # VALID STUDENTS ONLY
-                # ABSENT STUDENTS ARE EXCLUDED
-                # =================================================
                 valid_percentages = (
                     rdf["Total %"]
                     .dropna()
@@ -1710,9 +1670,6 @@ elif page == "📝 Objective Analysis":
                     valid_percentages
                 )
 
-                # =================================================
-                # CLASS ACHIEVEMENT DISTRIBUTION
-                # =================================================
                 if total_students > 0:
 
                     fail_percentage = (
@@ -1766,9 +1723,6 @@ elif page == "📝 Objective Analysis":
                     good_percentage = 0
                     excellent_percentage = 0
 
-                # =================================================
-                # OVERALL CLASS JUDGMENT
-                # =================================================
                 if total_students == 0:
 
                     overall = t("N/A")
@@ -1796,9 +1750,6 @@ elif page == "📝 Objective Analysis":
 
                     overall = t("Below Acceptable")
 
-                # =================================================
-                # SUMMARY
-                # =================================================
                 st.subheader(
                     t("📢 Summary")
                 )
@@ -1829,10 +1780,6 @@ elif page == "📝 Objective Analysis":
                     f"{excellent_percentage:.1f}%"
                 )
 
-                # =================================================
-                # LEVEL DISTRIBUTION
-                # ABSENT STUDENTS ARE EXCLUDED FROM PIE CHART
-                # =================================================
                 level_df = (
                     rdf[
                         rdf["Level"] != t("Absent")
@@ -1864,14 +1811,8 @@ elif page == "📝 Objective Analysis":
                     .sort_values("Level")
                 )
 
-                # =================================================
-                # TWO MAIN CHARTS
-                # =================================================
                 v1, v2 = st.columns(2)
 
-                # =================================================
-                # STUDENT ACHIEVEMENT CHART
-                # =================================================
                 with v1:
 
                     st.subheader(
@@ -1899,10 +1840,6 @@ elif page == "📝 Objective Analysis":
                         use_container_width=True
                     )
 
-                # =================================================
-                # LEVEL DISTRIBUTION PIE CHART
-                # ABSENT STUDENTS ARE NOT INCLUDED
-                # =================================================
                 with v2:
 
                     st.subheader(
@@ -1932,9 +1869,6 @@ elif page == "📝 Objective Analysis":
                         use_container_width=True
                     )
 
-                # =================================================
-                # SUPPORT LEVELS
-                # =================================================
                 st.subheader(
                     t("🎯 Student Support Levels")
                 )
@@ -1976,17 +1910,11 @@ elif page == "📝 Objective Analysis":
                     use_container_width=True
                 )
 
-                # =================================================
-                # FINAL STUDENT REPORT
-                # =================================================
                 st.dataframe(
                     rdf,
                     use_container_width=True
                 )
 
-                # =================================================
-                # DOWNLOAD REPORT
-                # =================================================
                 excel_buffer = io.BytesIO()
 
                 rdf.to_excel(
@@ -3248,12 +3176,349 @@ elif page == "📑 Reports":
             "By Assessment Total Mark"
         ):
 
-            st.info(
-                t(
-                    "This comparison option is ready "
-                    "for total-mark based analysis."
-                )
+            st.subheader(
+                t("📊 By Assessment Total Mark")
             )
+
+            st.info(
+                "Upload Objective Analysis (objectives) OR "
+                "Total Mark sheets per class. "
+                "All will be converted to percentage. "
+                "Bands: Below 60% (Weak), 60-75% (Acceptable), "
+                "76-85% (Very Good), 86-100% (Excellent)."
+            )
+
+            n_sec = st.number_input(
+                t("Number of classes"),
+                min_value=2,
+                max_value=10,
+                value=2,
+                step=1,
+                key="nsec_total"
+            )
+
+            sec_files = []
+
+            for i in range(int(n_sec)):
+
+                sec_files.append(
+                    st.file_uploader(
+                        f"📄 {t('Class')} {i + 1} {t('file')}",
+                        type=["xlsx", "xls"],
+                        key=f"totalfile_{i}"
+                    )
+                )
+
+            if all(sec_files):
+
+                sections_data = []
+
+                for idx, file in enumerate(
+                    sec_files,
+                    1
+                ):
+
+                    # -------------------------------------------------
+                    # Detect whether this is an Objective Analysis
+                    # file or a Total Mark file.
+                    # -------------------------------------------------
+                    file.seek(0)
+
+                    try:
+                        raw_check = pd.read_excel(
+                            file,
+                            header=1
+                        )
+
+                        if raw_check.empty:
+                            st.error(
+                                f"❌ Class {idx} file is empty."
+                            )
+                            st.stop()
+
+                        first_column_values = (
+                            raw_check.iloc[:, 0]
+                            .astype(str)
+                            .str.strip()
+                            .str.lower()
+                        )
+
+                        has_total_row = (
+                            first_column_values
+                            .str.contains(
+                                "points for objectives",
+                                case=False,
+                                na=False
+                            )
+                            .any()
+                        )
+
+                    except Exception:
+                        st.error(
+                            f"❌ Class {idx} file could not be read."
+                        )
+                        st.stop()
+
+                    # -------------------------------------------------
+                    # Objective Analysis file
+                    # -------------------------------------------------
+                    if has_total_row:
+
+                        meta, df = read_objectives_file(
+                            file
+                        )
+
+                    # -------------------------------------------------
+                    # Total Mark file
+                    # -------------------------------------------------
+                    else:
+
+                        meta, df = read_total_file(
+                            file
+                        )
+
+                    if meta is None or df is None:
+
+                        st.error(
+                            f"❌ Class {idx} file invalid "
+                            "(no valid percentage or total mark data)."
+                        )
+
+                        st.stop()
+
+                    class_name = meta.get(
+                        "Class",
+                        f"Class {idx}"
+                    )
+
+                    st.markdown(
+                        f"### 📋 {t('Class')} "
+                        f"{idx} {t('Info')}"
+                    )
+
+                    m1, m2, m3, m4 = st.columns(4)
+
+                    m1.markdown(
+                        f"**{t('👩‍🏫 Teacher:')}** "
+                        f"{meta.get('Teacher Name', 'N/A')}"
+                    )
+
+                    m2.markdown(
+                        f"**{t('🏫 Class:')}** "
+                        f"{class_name}"
+                    )
+
+                    m3.markdown(
+                        f"**{t('📅 Date:')}** "
+                        f"{meta.get('Date', 'N/A')}"
+                    )
+
+                    m4.markdown(
+                        f"**{t('📝 Assessment:')}** "
+                        f"{meta.get('Assessment name', 'N/A')}"
+                    )
+
+                    st.markdown(
+                        f"**{t('📚 Subject:')}** "
+                        f"{meta.get('Subject', 'N/A')}"
+                    )
+
+                    # -------------------------------------------------
+                    # Performance bands
+                    #
+                    # IMPORTANT:
+                    # Pct is already normalized to 100 by:
+                    #
+                    # Total Mark:
+                    #     obtained / maximum * 100
+                    #
+                    # Objective Analysis:
+                    #     obtained / objective maximum * 100
+                    #
+                    # Therefore assessments can be out of 15, 20,
+                    # 30, 40, 50, 100, etc.
+                    # -------------------------------------------------
+                    def total_mark_band(p):
+
+                        if pd.isna(p):
+                            return t(
+                                "Below 60% (Weak)"
+                            )
+
+                        if p < 60:
+                            return t(
+                                "Below 60% (Weak)"
+                            )
+
+                        elif p <= 75:
+                            return t(
+                                "60-75% (Acceptable)"
+                            )
+
+                        elif p <= 85:
+                            return (
+                                "76-85% (Very Good)"
+                            )
+
+                        else:
+                            return (
+                                "86-100% (Excellent)"
+                            )
+
+                    df["Band"] = (
+                        df["Pct"]
+                        .apply(total_mark_band)
+                    )
+
+                    sections_data.append(
+                        {
+                            "name":
+                                class_name,
+
+                            "df":
+                                df,
+
+                            "bands":
+                                df["Band"]
+                                .value_counts()
+                        }
+                    )
+
+                # =====================================================
+                # BAND ORDER
+                # =====================================================
+                band_order = [
+                    t("Below 60% (Weak)"),
+                    t("60-75% (Acceptable)"),
+                    "76-85% (Very Good)",
+                    "86-100% (Excellent)"
+                ]
+
+                # =====================================================
+                # CREATE BAND TABLE
+                # =====================================================
+                band_df = pd.DataFrame()
+
+                for section in sections_data:
+
+                    temp = (
+                        section["bands"]
+                        .reindex(band_order)
+                        .fillna(0)
+                        .astype(int)
+                    )
+
+                    temp.name = section["name"]
+
+                    band_df = pd.concat(
+                        [
+                            band_df,
+                            temp.to_frame().T
+                        ],
+                        axis=0
+                    )
+
+                band_df = band_df[
+                    band_order
+                ]
+
+                # =====================================================
+                # PREPARE CHART DATA
+                # =====================================================
+                plot_df = (
+                    band_df
+                    .reset_index()
+                    .melt(
+                        id_vars="index",
+                        value_vars=band_order
+                    )
+                )
+
+                plot_df.columns = [
+                    "Class",
+                    "Band",
+                    "Count"
+                ]
+
+                # =====================================================
+                # BAND DISTRIBUTION
+                # =====================================================
+                st.subheader(
+                    t(
+                        "📊 Band Distribution "
+                        "per Class"
+                    )
+                )
+
+                band_fig = px.bar(
+                    plot_df,
+                    x="Band",
+                    y="Count",
+                    color="Class",
+                    barmode="group",
+                    text="Count"
+                )
+
+                st.plotly_chart(
+                    band_fig,
+                    use_container_width=True
+                )
+
+                # =====================================================
+                # DUMBBELL CHART
+                # =====================================================
+                st.subheader(
+                    "📈 Dumbbell Chart (Class gap per Band)"
+                )
+
+                fig = go.Figure()
+
+                for sec in band_df.index:
+
+                    fig.add_trace(
+                        go.Scatter(
+                            x=band_df.loc[sec],
+                            y=band_order,
+                            mode="markers",
+                            name=str(sec),
+                            marker=dict(
+                                size=14
+                            )
+                        )
+                    )
+
+                for band in band_order:
+
+                    fig.add_trace(
+                        go.Scatter(
+                            x=band_df[band].values,
+                            y=[band] * len(band_df),
+                            mode="lines",
+                            line=dict(
+                                color="lightgray",
+                                width=2
+                            ),
+                            showlegend=False
+                        )
+                    )
+
+                fig.update_layout(
+                    xaxis_title="Student Count",
+                    yaxis_title="Performance Band",
+                    height=400
+                )
+
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True
+                )
+
+                # =====================================================
+                # SUCCESS MESSAGE
+                # =====================================================
+                st.success(
+                    "✅ Total Mark comparison complete."
+                )
 
         # =====================================================
         # EXTERNAL BENCHMARK
