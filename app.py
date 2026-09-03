@@ -1790,8 +1790,7 @@ level_df = (
     level_df
     .sort_values("Level")
 )
-                )
-
+                
                 v1, v2 = st.columns(2)
 
                 # =================================================
