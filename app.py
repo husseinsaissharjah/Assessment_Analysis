@@ -1825,36 +1825,38 @@ level_df = (
                         use_container_width=True
                     )
 
-                # =================================================
-                # LEVEL DISTRIBUTION PIE CHART
-                # =================================================
-                with v2:
+            # =================================================
+# LEVEL DISTRIBUTION PIE CHART
+# ABSENT STUDENTS ARE NOT INCLUDED
+# =================================================
+with v2:
 
-                    st.subheader(
-                        t("📊 Level Distribution")
-                    )
+    st.subheader(
+        t("📊 Level Distribution")
+    )
 
-                    pie_fig = px.pie(
-                        level_df,
-                        names="Level",
-                        values="Count",
-                        color="Level",
-                        color_discrete_map={
-                            t(key): value
-                            for key, value
-                            in COLORS.items()
-                        },
-                        hole=0.3
-                    )
+    pie_fig = px.pie(
+        level_df,
+        names="Level",
+        values="Count",
+        color="Level",
+        color_discrete_map={
+            t("Fail"): COLORS["Fail"],
+            t("Acceptable"): COLORS["Acceptable"],
+            t("Good"): COLORS["Good"],
+            t("Excellent"): COLORS["Excellent"]
+        },
+        hole=0.3
+    )
 
-                    pie_fig.update_traces(
-                        textinfo="percent+label"
-                    )
+    pie_fig.update_traces(
+        textinfo="percent+label"
+    )
 
-                    st.plotly_chart(
-                        pie_fig,
-                        use_container_width=True
-                    )
+    st.plotly_chart(
+        pie_fig,
+        use_container_width=True
+    )
 
                 # =================================================
                 # SUPPORT LEVELS
