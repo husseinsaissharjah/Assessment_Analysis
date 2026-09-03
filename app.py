@@ -44,12 +44,16 @@ TRANSLATIONS = {
             "حلل نتائج MAP والتقييمات الداخلية والدرجات وأداء الطلاب خلال ثوانٍ.",
         "📌 How to use": "📌 كيفية الاستخدام",
         "① Upload Data": "① تحميل البيانات",
-        "Upload your Excel files with student marks.": "قم بتحميل ملفات Excel التي تحتوي على علامات الطلاب.",
+        "Upload your Excel files with student marks.":
+            "قم بتحميل ملفات Excel التي تحتوي على علامات الطلاب.",
         "② Choose Analysis": "② اختر نوع التحليل",
-        "Pick the analysis type from the sidebar.": "اختر نوع التحليل من القائمة الجانبية.",
+        "Pick the analysis type from the sidebar.":
+            "اختر نوع التحليل من القائمة الجانبية.",
         "③ View Insights": "③ عرض النتائج",
-        "See charts, gaps, and download reports.": "شاهد الرسوم البيانية والفجوات وقم بتحميل التقارير.",
-        "Use the sidebar on the left to navigate to your analysis.": "استخدم القائمة الجانبية للتنقل بين أقسام التحليل.",
+        "See charts, gaps, and download reports.":
+            "شاهد الرسوم البيانية والفجوات وقم بتحميل التقارير.",
+        "Use the sidebar on the left to navigate to your analysis.":
+            "استخدم القائمة الجانبية للتنقل بين أقسام التحليل.",
 
         # Overview
         "📊 Assessment Analysis Overview": "📊 نظرة عامة على تحليل التقييم",
@@ -114,14 +118,19 @@ TRANSLATIONS = {
         "Objectives": "الأهداف",
         "Preview": "معاينة",
         "Analyze Assessment": "تحليل التقييم",
-        "Step 1: Upload Student Marks Excel": "الخطوة 1: تحميل ملف Excel لعلامات الطلاب",
-        "Step 2: Analysis Report": "الخطوة 2: تقرير التحليل",
-        "📊 Comparison Table (Percentage Based)": "📊 جدول المقارنة (حسب النسبة المئوية)",
+        "Step 1: Upload Student Marks Excel":
+            "الخطوة 1: تحميل ملف Excel لعلامات الطلاب",
+        "Step 2: Analysis Report":
+            "الخطوة 2: تقرير التحليل",
+        "📊 Comparison Table (Percentage Based)":
+            "📊 جدول المقارنة (حسب النسبة المئوية)",
         "📢 Summary": "📢 الملخص",
         "Bar Chart": "الرسم البياني الشريطي",
         "Pie Chart": "الرسم البياني الدائري",
-        "📈 Average Score Trend (%)": "📈 اتجاه متوسط الدرجات (%)",
-        "📈 Student Growth (Difference)": "📈 نمو الطالب (الفرق)",
+        "📈 Average Score Trend (%)":
+            "📈 اتجاه متوسط الدرجات (%)",
+        "📈 Student Growth (Difference)":
+            "📈 نمو الطالب (الفرق)",
         "👥 Support Groups": "👥 مجموعات الدعم",
         "🎯 Student Support Levels": "🎯 مستويات دعم الطلاب",
         "📊 Student Achievement": "📊 إنجاز الطلاب",
@@ -131,81 +140,132 @@ TRANSLATIONS = {
         "Upload Excel": "تحميل Excel",
         "📥 Download Excel Template": "📥 تحميل قالب Excel",
         "📊 Download Excel": "📊 تحميل Excel",
-        "📊 Download Comparison Excel": "📊 تحميل Excel المقارنة",
+        "📊 Download Comparison Excel":
+            "📊 تحميل Excel المقارنة",
 
         # MAP
         "🗺️ MAP Analysis": "🗺️ تحليل MAP",
-        "📄 Upload MAP Data Excel": "📄 تحميل ملف Excel لبيانات MAP",
-        "📥 Download MAP Excel Template": "📥 تحميل قالب Excel لـ MAP",
-        "📋 MAP Data Preview": "📋 معاينة بيانات MAP",
-        "📊 MAP Summary": "📊 ملخص MAP",
-        "👥 Students": "👥 الطلاب",
-        "📉 Previous Avg RIT": "📉 متوسط RIT السابق",
-        "📈 Current Avg RIT": "📈 متوسط RIT الحالي",
-        "🚀 Average Growth": "🚀 متوسط النمو",
-        "🎯 Average Percentile": "🎯 متوسط النسبة المئوية",
-        "📈 Student Growth": "📈 نمو الطلاب",
-        "📊 Growth Distribution": "📊 توزيع النمو",
-        "📋 Student MAP Analysis": "📋 تحليل MAP للطلاب",
-        "📥 Download MAP Analysis": "📥 تحميل تحليل MAP",
-        "Growth Distribution": "توزيع النمو",
-        "🎯 Student Percentile": "🎯 النسبة المئوية للطلاب",
-        "What is a RIT Score?": "ما هي درجة RIT؟",
+        "📄 Upload MAP Data Excel":
+            "📄 تحميل ملف Excel لبيانات MAP",
+        "📥 Download MAP Excel Template":
+            "📥 تحميل قالب Excel لـ MAP",
+        "📋 MAP Data Preview":
+            "📋 معاينة بيانات MAP",
+        "📊 MAP Summary":
+            "📊 ملخص MAP",
+        "👥 Students":
+            "👥 الطلاب",
+        "📉 Previous Avg RIT":
+            "📉 متوسط RIT السابق",
+        "📈 Current Avg RIT":
+            "📈 متوسط RIT الحالي",
+        "🚀 Average Growth":
+            "🚀 متوسط النمو",
+        "🎯 Average Percentile":
+            "🎯 متوسط النسبة المئوية",
+        "📈 Student Growth":
+            "📈 نمو الطلاب",
+        "📊 Growth Distribution":
+            "📊 توزيع النمو",
+        "📋 Student MAP Analysis":
+            "📋 تحليل MAP للطلاب",
+        "📥 Download MAP Analysis":
+            "📥 تحميل تحليل MAP",
+        "Growth Distribution":
+            "توزيع النمو",
+        "🎯 Student Percentile":
+            "🎯 النسبة المئوية للطلاب",
+        "What is a RIT Score?":
+            "ما هي درجة RIT؟",
         "The RIT score is the scale used by MAP Growth to measure student achievement.":
             "درجة RIT هي المقياس الذي يستخدمه MAP Growth لقياس إنجاز الطالب الأكاديمي.",
 
         # Achievement & Gaps
-        "🎯 Achievement & Gaps (Internal vs MAP)": "🎯 الإنجاز والفجوات (التقييم الداخلي مقابل MAP)",
-        "📄 Upload Single Sheet": "📄 تحميل ورقة واحدة",
-        "Status": "الحالة",
-        "Count": "العدد",
-        "Students": "الطلاب",
-        "📈 Student Gap (Difference)": "📈 فجوة الطالب (الفرق)",
+        "🎯 Achievement & Gaps (Internal vs MAP)":
+            "🎯 الإنجاز والفجوات (التقييم الداخلي مقابل MAP)",
+        "📄 Upload Single Sheet":
+            "📄 تحميل ورقة واحدة",
+        "Status":
+            "الحالة",
+        "Count":
+            "العدد",
+        "Students":
+            "الطلاب",
+        "📈 Student Gap (Difference)":
+            "📈 فجوة الطالب (الفرق)",
 
         # Reports
-        "Select Service": "اختر الخدمة",
-        "Compare between sections": "مقارنة بين الأقسام",
-        "🔍 Compare Between Sections": "🔍 مقارنة بين الأقسام",
-        "Comparison Type": "نوع المقارنة",
-        "By Assessment Objectives": "حسب أهداف التقييم",
-        "By Assessment Total Mark": "حسب الدرجة الإجمالية للتقييم",
-        "By External Benchmark Assessment": "حسب تقييم المعيار الخارجي",
-        "📚 By Assessment Objectives": "📚 حسب أهداف التقييم",
-        "Number of classes": "عدد الفصول",
-        "📄 Class": "📄 الصف",
-        "file": "ملف",
-        "📊 Band Distribution per Class": "📊 توزيع الفئات لكل صف",
-        "Band": "الفئة",
-        "✅ Comparison complete.": "✅ اكتملت المقارنة.",
-        "📊 By Assessment Total Mark": "📊 حسب الدرجة الإجمالية للتقييم",
-        "🏢 By External Benchmark Assessment": "🏢 حسب تقييم المعيار الخارجي",
+        "Select Service":
+            "اختر الخدمة",
+        "Compare between sections":
+            "مقارنة بين الأقسام",
+        "🔍 Compare Between Sections":
+            "🔍 مقارنة بين الأقسام",
+        "Comparison Type":
+            "نوع المقارنة",
+        "By Assessment Objectives":
+            "حسب أهداف التقييم",
+        "By Assessment Total Mark":
+            "حسب الدرجة الإجمالية للتقييم",
+        "By External Benchmark Assessment":
+            "حسب تقييم المعيار الخارجي",
+        "📚 By Assessment Objectives":
+            "📚 حسب أهداف التقييم",
+        "Number of classes":
+            "عدد الفصول",
+        "📄 Class":
+            "📄 الصف",
+        "file":
+            "ملف",
+        "📊 Band Distribution per Class":
+            "📊 توزيع الفئات لكل صف",
+        "Band":
+            "الفئة",
+        "✅ Comparison complete.":
+            "✅ اكتملت المقارنة.",
+        "📊 By Assessment Total Mark":
+            "📊 حسب الدرجة الإجمالية للتقييم",
+        "🏢 By External Benchmark Assessment":
+            "🏢 حسب تقييم المعيار الخارجي",
 
         # Errors
-        "❌ Need 'Points for Objectives' row.": "❌ يجب أن يحتوي الملف على صف 'Points for Objectives'.",
-        "🚫 Fix data entry:": "🚫 يرجى تصحيح إدخال البيانات:",
-        "❌ File missing 'Points for Objectives' row.": "❌ الملف يفتقد صف 'Points for Objectives'.",
-        "❌ File missing required rows/columns.": "❌ الملف يفتقد الصفوف أو الأعمدة المطلوبة.",
-        "❌ Missing columns: ": "❌ الأعمدة المفقودة: ",
-        "❌ Error reading MAP file: ": "❌ خطأ في قراءة ملف MAP: ",
-        "❌ Class file invalid": "❌ ملف الصف غير صالح",
+        "❌ Need 'Points for Objectives' row.":
+            "❌ يجب أن يحتوي الملف على صف 'Points for Objectives'.",
+        "🚫 Fix data entry:":
+            "🚫 يرجى تصحيح إدخال البيانات:",
+        "❌ File missing 'Points for Objectives' row.":
+            "❌ الملف يفتقد صف 'Points for Objectives'.",
+        "❌ File missing required rows/columns.":
+            "❌ الملف يفتقد الصفوف أو الأعمدة المطلوبة.",
+        "❌ Missing columns: ":
+            "❌ الأعمدة المفقودة: ",
+        "❌ Error reading MAP file: ":
+            "❌ خطأ في قراءة ملف MAP: ",
+        "❌ Class file invalid":
+            "❌ ملف الصف غير صالح",
 
         # Instructions
-        ("Row 1: Assessment Information\n"
-         "Row 2: Headers (Objective names)\n"
-         "Row 3: Objective Descriptions\n"
-         "Row 4: 'Points for Objectives' + Maximum Marks\n"
-         "Row 5+: Student Marks\n"
-         "Leave empty or enter 'A' for absent students."):
-            ("الصف 1: معلومات التقييم\n"
-             "الصف 2: العناوين (أسماء الأهداف)\n"
-             "الصف 3: وصف الأهداف\n"
-             "الصف 4: 'Points for Objectives' + الدرجات القصوى\n"
-             "الصف 5 وما بعده: علامات الطلاب\n"
-             "اترك الخانة فارغة أو أدخل 'A' للطالب الغائب."),
+        (
+            "Row 1: Assessment Information\n"
+            "Row 2: Headers (Objective names)\n"
+            "Row 3: Objective Descriptions\n"
+            "Row 4: 'Points for Objectives' + Maximum Marks\n"
+            "Row 5+: Student Marks\n"
+            "Leave empty or enter 'A' for absent students."
+        ):
+            (
+                "الصف 1: معلومات التقييم\n"
+                "الصف 2: العناوين (أسماء الأهداف)\n"
+                "الصف 3: وصف الأهداف\n"
+                "الصف 4: 'Points for Objectives' + الدرجات القصوى\n"
+                "الصف 5 وما بعده: علامات الطلاب\n"
+                "اترك الخانة فارغة أو أدخل 'A' للطالب الغائب."
+            ),
 
         "Choose the number of assessments. Upload files using the same Excel format as Objective Analysis.":
             "اختر عدد التقييمات. قم بتحميل الملفات باستخدام نفس تنسيق Excel المستخدم في تحليل الأهداف.",
-        "🔢 Number of assessments": "🔢 عدد التقييمات",
+        "🔢 Number of assessments":
+            "🔢 عدد التقييمات",
     }
 }
 
@@ -673,8 +733,6 @@ def read_objectives_file(file):
 
         # IMPORTANT:
         # Do not convert missing/absent marks to zero here.
-        # We preserve missing values so absent students
-        # can be identified correctly.
         for column in valid_cols:
             df[column] = pd.to_numeric(
                 df[column],
@@ -1467,8 +1525,10 @@ elif page == "📝 Objective Analysis":
                             {
                                 "Student Name":
                                     row["Student Name"],
-                                "Total": "-",
-                                "Total %": None,
+                                "Total":
+                                    "-",
+                                "Total %":
+                                    None,
                                 "Level":
                                     t("Absent")
                             }
@@ -1478,6 +1538,19 @@ elif page == "📝 Objective Analysis":
 
                     # ---------------------------------------------
                     # CALCULATE PERCENTAGE
+                    #
+                    # IMPORTANT:
+                    # Each student is normalized according to the
+                    # maximum marks of the objectives that actually
+                    # have a mark.
+                    #
+                    # Example:
+                    # Objective totals = 10 + 15 + 5 = 30
+                    # Student obtains 8 + 12 + 4 = 24
+                    # Percentage = 24 / 30 * 100 = 80%
+                    #
+                    # This works whether the assessment total is
+                    # 15, 20, 30, 40, 50, etc.
                     # ---------------------------------------------
                     total_obtained = 0.0
                     total_possible_for_student = 0.0
@@ -1756,41 +1829,44 @@ elif page == "📝 Objective Analysis":
                     f"{excellent_percentage:.1f}%"
                 )
 
-            # =================================================
-# LEVEL DISTRIBUTION
-# ABSENT STUDENTS ARE EXCLUDED FROM PIE CHART
-# =================================================
-level_df = (
-    rdf[
-        rdf["Level"] != t("Absent")
-    ]["Level"]
-    .value_counts()
-    .reset_index()
-)
+                # =================================================
+                # LEVEL DISTRIBUTION
+                # ABSENT STUDENTS ARE EXCLUDED FROM PIE CHART
+                # =================================================
+                level_df = (
+                    rdf[
+                        rdf["Level"] != t("Absent")
+                    ]["Level"]
+                    .value_counts()
+                    .reset_index()
+                )
 
-level_df.columns = [
-    "Level",
-    "Count"
-]
+                level_df.columns = [
+                    "Level",
+                    "Count"
+                ]
 
-ordered_levels = [
-    t("Fail"),
-    t("Acceptable"),
-    t("Good"),
-    t("Excellent")
-]
+                ordered_levels = [
+                    t("Fail"),
+                    t("Acceptable"),
+                    t("Good"),
+                    t("Excellent")
+                ]
 
-level_df["Level"] = pd.Categorical(
-    level_df["Level"],
-    categories=ordered_levels,
-    ordered=True
-)
+                level_df["Level"] = pd.Categorical(
+                    level_df["Level"],
+                    categories=ordered_levels,
+                    ordered=True
+                )
 
-level_df = (
-    level_df
-    .sort_values("Level")
-)
-                
+                level_df = (
+                    level_df
+                    .sort_values("Level")
+                )
+
+                # =================================================
+                # TWO MAIN CHARTS
+                # =================================================
                 v1, v2 = st.columns(2)
 
                 # =================================================
@@ -1814,8 +1890,7 @@ level_df = (
                         range_y=[0, 100],
                         color_discrete_map={
                             t(key): value
-                            for key, value
-                            in COLORS.items()
+                            for key, value in COLORS.items()
                         }
                     )
 
@@ -1824,38 +1899,38 @@ level_df = (
                         use_container_width=True
                     )
 
-            # =================================================
-# LEVEL DISTRIBUTION PIE CHART
-# ABSENT STUDENTS ARE NOT INCLUDED
-# =================================================
-with v2:
+                # =================================================
+                # LEVEL DISTRIBUTION PIE CHART
+                # ABSENT STUDENTS ARE NOT INCLUDED
+                # =================================================
+                with v2:
 
-    st.subheader(
-        t("📊 Level Distribution")
-    )
+                    st.subheader(
+                        t("📊 Level Distribution")
+                    )
 
-    pie_fig = px.pie(
-        level_df,
-        names="Level",
-        values="Count",
-        color="Level",
-        color_discrete_map={
-            t("Fail"): COLORS["Fail"],
-            t("Acceptable"): COLORS["Acceptable"],
-            t("Good"): COLORS["Good"],
-            t("Excellent"): COLORS["Excellent"]
-        },
-        hole=0.3
-    )
+                    pie_fig = px.pie(
+                        level_df,
+                        names="Level",
+                        values="Count",
+                        color="Level",
+                        color_discrete_map={
+                            t("Fail"): COLORS["Fail"],
+                            t("Acceptable"): COLORS["Acceptable"],
+                            t("Good"): COLORS["Good"],
+                            t("Excellent"): COLORS["Excellent"]
+                        },
+                        hole=0.3
+                    )
 
-    pie_fig.update_traces(
-        textinfo="percent+label"
-    )
+                    pie_fig.update_traces(
+                        textinfo="percent+label"
+                    )
 
-    st.plotly_chart(
-        pie_fig,
-        use_container_width=True
-    )
+                    st.plotly_chart(
+                        pie_fig,
+                        use_container_width=True
+                    )
 
                 # =================================================
                 # SUPPORT LEVELS
