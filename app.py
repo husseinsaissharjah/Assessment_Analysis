@@ -779,10 +779,13 @@ def read_objectives_file(file):
                 continue
 
             try:
+
                 max_value = float(
                     max_row[column]
                 )
+
             except (ValueError, TypeError):
+
                 continue
 
             if max_value > 0:
@@ -3279,11 +3282,10 @@ elif page == "📑 Reports":
                     # -------------------------------------------------
                     # OBJECTIVE AVERAGES
                     #
-                    # Each objective is converted to percentage:
-                    #
-                    # Student mark / Objective max * 100
-                    #
-                    # Then the class average is calculated.
+                    # Every objective is converted independently
+                    # to a percentage of its own maximum.
+                    # This makes comparison fair even if objectives
+                    # have different maximum marks.
                     # -------------------------------------------------
                     objective_average = {}
 
@@ -3410,7 +3412,7 @@ elif page == "📑 Reports":
                 )
 
                 # =====================================================
-                # NEW: OBJECTIVE COMPARISON TABLE
+                # OBJECTIVE COMPARISON TABLE
                 # =====================================================
                 st.markdown("---")
 
@@ -3425,9 +3427,9 @@ elif page == "📑 Reports":
                     "different maximum marks."
                 )
 
-                # Find objectives that can be compared.
-                # We use the objective names from the first class
-                # and compare them with the other classes.
+                # -----------------------------------------------------
+                # FIND COMMON OBJECTIVES
+                # -----------------------------------------------------
                 common_objectives = list(
                     sections_data[0]["obj_names"]
                 )
@@ -3435,12 +3437,16 @@ elif page == "📑 Reports":
                 for section in sections_data[1:]:
 
                     common_objectives = [
-                        obj for obj in common_objectives
+                        obj
+                        for obj in common_objectives
                         if obj in section["obj_names"]
                     ]
 
                 objective_comparison_rows = []
 
+                # -----------------------------------------------------
+                # BUILD ONE ROW PER OBJECTIVE
+                # -----------------------------------------------------
                 for objective in common_objectives:
 
                     row = {
@@ -3460,6 +3466,9 @@ elif page == "📑 Reports":
 
                     class_percentages = {}
 
+                    # -------------------------------------------------
+                    # ADD EVERY CLASS PERCENTAGE
+                    # -------------------------------------------------
                     for section in sections_data:
 
                         percentage = section[
@@ -3469,12 +3478,14 @@ elif page == "📑 Reports":
                             float("nan")
                         )
 
+                        class_name = section["name"]
+
                         class_percentages[
-                            section["name"]
+                            class_name
                         ] = percentage
 
                         row[
-                            f"{section['name']} %"
+                            f"{class_name} %"
                         ] = (
                             round(
                                 percentage,
@@ -3484,6 +3495,9 @@ elif page == "📑 Reports":
                             else None
                         )
 
+                    # -------------------------------------------------
+                    # DETERMINE BETTER CLASS
+                    # -------------------------------------------------
                     valid_classes = {
                         class_name: value
                         for class_name, value
@@ -3515,7 +3529,12 @@ elif page == "📑 Reports":
 
                             better_class = t("Tie")
 
-                            difference = 0.0
+                            difference = (
+                                max_value
+                                - min(
+                                    valid_classes.values()
+                                )
+                            )
 
                         else:
 
@@ -3551,12 +3570,19 @@ elif page == "📑 Reports":
                         row
                     )
 
+                # -----------------------------------------------------
+                # DISPLAY OBJECTIVE COMPARISON TABLE
+                # -----------------------------------------------------
                 if objective_comparison_rows:
 
                     objective_comparison_df = (
                         pd.DataFrame(
                             objective_comparison_rows
                         )
+                    )
+
+                    st.markdown(
+                        f"### 📋 {t('Better Class by Objective')}"
                     )
 
                     st.dataframe(
@@ -3831,9 +3857,7 @@ elif page == "📑 Reports":
                     )
 
                     # =================================================
-                    # PERFORMANCE BANDS
-                    #
-                    # CHANGED:
+                    # TOTAL MARK PERFORMANCE BANDS
                     #
                     # 0-59   = Weak
                     # 60-75  = Acceptable
