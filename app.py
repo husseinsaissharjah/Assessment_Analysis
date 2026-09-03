@@ -1756,34 +1756,40 @@ elif page == "📝 Objective Analysis":
                     f"{excellent_percentage:.1f}%"
                 )
 
-                # =================================================
-                # LEVEL DISTRIBUTION
-                # =================================================
-                level_df = (
-                    rdf["Level"]
-                    .value_counts()
-                    .reset_index()
-                )
+            # =================================================
+# LEVEL DISTRIBUTION
+# ABSENT STUDENTS ARE EXCLUDED FROM PIE CHART
+# =================================================
+level_df = (
+    rdf[
+        rdf["Level"] != t("Absent")
+    ]["Level"]
+    .value_counts()
+    .reset_index()
+)
 
-                level_df.columns = [
-                    "Level",
-                    "Count"
-                ]
+level_df.columns = [
+    "Level",
+    "Count"
+]
 
-                ordered_levels = [
-                    t(level)
-                    for level in ORDER
-                ]
+ordered_levels = [
+    t("Fail"),
+    t("Acceptable"),
+    t("Good"),
+    t("Excellent")
+]
 
-                level_df["Level"] = pd.Categorical(
-                    level_df["Level"],
-                    categories=ordered_levels,
-                    ordered=True
-                )
+level_df["Level"] = pd.Categorical(
+    level_df["Level"],
+    categories=ordered_levels,
+    ordered=True
+)
 
-                level_df = (
-                    level_df
-                    .sort_values("Level")
+level_df = (
+    level_df
+    .sort_values("Level")
+)
                 )
 
                 v1, v2 = st.columns(2)
