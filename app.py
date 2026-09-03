@@ -987,21 +987,21 @@ elif page == "📝 Objective Analysis":
                         })
                         continue
 
-                    percentage_list = []
-                    total_obtained = 0
-
-                    for index, column in enumerate(obj_names):
-                        mark = float(row[column])
-                        total_obtained += mark
-
-                        if obj_max[index] > 0:
-                            percentage_list.append(mark / obj_max[index] * 100)
-
+                    # =====================================================
+                    # EXCEL-ALIGNED TOTAL CALCULATION
+                    # =====================================================
+                    # Normalize the student's actual total mark to 0-100.
+                    # This is independent of whether the assessment is out of
+                    # 15, 20, 40, 50, 100, or any other maximum.
+                    # IMPORTANT: Do not average objective percentages here.
+                    total_obtained = sum(float(row[column]) for column in obj_names)
                     total_percentage = (
-                        sum(percentage_list) / len(percentage_list)
-                        if percentage_list else 0
+                        (total_obtained / total_max) * 100
+                        if total_max > 0 else 0
                     )
 
+                    # Apply the existing app achievement levels to the
+                    # normalized 0-100 percentage.
                     if total_percentage < 60:
                         level = t("Fail")
                     elif total_percentage < 70:
@@ -1482,7 +1482,7 @@ elif page == "🎯 Achievement & Gaps":
 # =========================================================
 elif page == "📑 Reports":
     st.title(t("📑 Reports"))
-    st.markdown(f"### 🛠️ {t("Available Services")}")
+    st.markdown(f"### 🛠️ {t('Available Services')}")
     service = st.radio(t("Select Service"), [t("Compare between sections")])
 
     if service == t("Compare between sections"):
@@ -1508,14 +1508,14 @@ elif page == "📑 Reports":
                     if meta is None:
                         st.error(f"❌ Class {idx} file invalid"); st.stop()
                     class_name = meta.get('Class', f'Class {idx}')
-                    st.markdown(f"### 📋 {t("Class")} {idx} {t("Info")}")
+                    st.markdown(f"### 📋 {t('Class')} {idx} {t('Info')}")
                     m1, m2, m3, m4 = st.columns(4)
-                    m1.markdown(f"**{t("👩‍🏫 Teacher:")}** {meta.get('Teacher Name', 'N/A')}")
-                    m2.markdown(f"**{t("🏫 Class:")}** {class_name}")
-                    m3.markdown(f"**{t("📅 Date:")}** {meta.get('Date', 'N/A')}")
-                    m4.markdown(f"**{t("📝 Assessment:")}** {meta.get('Assessment name', 'N/A')}")
-                    st.markdown(f"**{t("📚 Subject:")}** {meta.get('Subject', 'N/A')}")
-                    st.markdown(f"**{t("📚 Objectives:")}**")
+                    m1.markdown(f"**{t('👩‍🏫 Teacher:')}** {meta.get('Teacher Name', 'N/A')}")
+                    m2.markdown(f"**{t('🏫 Class:')}** {class_name}")
+                    m3.markdown(f"**{t('📅 Date:')}** {meta.get('Date', 'N/A')}")
+                    m4.markdown(f"**{t('📝 Assessment:')}** {meta.get('Assessment name', 'N/A')}")
+                    st.markdown(f"**{t('📚 Subject:')}** {meta.get('Subject', 'N/A')}")
+                    st.markdown(f"**{t('📚 Objectives:')}**")
                     for c in obj_names:
                         st.markdown(f"- **{c}** – {obj_desc.get(c, c)}")
 
@@ -1622,13 +1622,13 @@ elif page == "📑 Reports":
                     if meta is None:
                         st.error(f"❌ Class {idx} file invalid (no Pct or Total)"); st.stop()
                     class_name = meta.get('Class', f'Class {idx}')
-                    st.markdown(f"### 📋 {t("Class")} {idx} {t("Info")}")
+                    st.markdown(f"### 📋 {t('Class')} {idx} {t('Info')}")
                     m1, m2, m3, m4 = st.columns(4)
-                    m1.markdown(f"**{t("👩‍🏫 Teacher:")}** {meta.get('Teacher Name', 'N/A')}")
-                    m2.markdown(f"**{t("🏫 Class:")}** {class_name}")
-                    m3.markdown(f"**{t("📅 Date:")}** {meta.get('Date', 'N/A')}")
-                    m4.markdown(f"**{t("📝 Assessment:")}** {meta.get('Assessment name', 'N/A')}")
-                    st.markdown(f"**{t("📚 Subject:")}** {meta.get('Subject', 'N/A')}")
+                    m1.markdown(f"**{t('👩‍🏫 Teacher:')}** {meta.get('Teacher Name', 'N/A')}")
+                    m2.markdown(f"**{t('🏫 Class:')}** {class_name}")
+                    m3.markdown(f"**{t('📅 Date:')}** {meta.get('Date', 'N/A')}")
+                    m4.markdown(f"**{t('📝 Assessment:')}** {meta.get('Assessment name', 'N/A')}")
+                    st.markdown(f"**{t('📚 Subject:')}** {meta.get('Subject', 'N/A')}")
 
                     def band(p):
                         if pd.isna(p): return t("Below 60% (Weak)")
@@ -1707,13 +1707,13 @@ elif page == "📑 Reports":
                     if meta is None:
                         st.error(f"❌ Class {idx} file invalid (no Pct or Total)"); st.stop()
                     class_name = meta.get('Class', f'Class {idx}')
-                    st.markdown(f"### 📋 {t("Class")} {idx} {t("Info")}")
+                    st.markdown(f"### 📋 {t('Class')} {idx} {t('Info')}")
                     m1, m2, m3, m4 = st.columns(4)
-                    m1.markdown(f"**{t("👩‍🏫 Teacher:")}** {meta.get('Teacher Name', 'N/A')}")
-                    m2.markdown(f"**{t("🏫 Class:")}** {class_name}")
-                    m3.markdown(f"**{t("📅 Date:")}** {meta.get('Date', 'N/A')}")
-                    m4.markdown(f"**{t("📝 Assessment:")}** {meta.get('Assessment name', 'N/A')}")
-                    st.markdown(f"**{t("📚 Subject:")}** {meta.get('Subject', 'N/A')}")
+                    m1.markdown(f"**{t('👩‍🏫 Teacher:')}** {meta.get('Teacher Name', 'N/A')}")
+                    m2.markdown(f"**{t('🏫 Class:')}** {class_name}")
+                    m3.markdown(f"**{t('📅 Date:')}** {meta.get('Date', 'N/A')}")
+                    m4.markdown(f"**{t('📝 Assessment:')}** {meta.get('Assessment name', 'N/A')}")
+                    st.markdown(f"**{t('📚 Subject:')}** {meta.get('Subject', 'N/A')}")
 
                     def band(p):
                         if pd.isna(p): return t("Below 60% (Weak)")
