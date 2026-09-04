@@ -155,6 +155,10 @@ TRANSLATIONS = {
         "📊 Download Comparison Excel":
             "📊 تحميل Excel المقارنة",
 
+        # Excel worksheet
+        "Select Worksheet":
+            "اختر ورقة العمل",
+
         # MAP
         "🗺️ MAP Analysis": "🗺️ تحليل MAP",
         "📄 Upload MAP Data Excel":
@@ -475,7 +479,6 @@ with st.sidebar:
             key=f"navigation_{p}",
             use_container_width=True
         ):
-
             st.session_state.page = p
             st.rerun()
 
@@ -546,6 +549,54 @@ def support_level(pct):
 
 
 # =========================================================
+# EXCEL WORKSHEET SELECTION
+# =========================================================
+def get_excel_sheet(file, key, label=None):
+    """
+    Read the worksheet names from an uploaded Excel workbook.
+
+    If there is only one worksheet, it is selected automatically.
+    If there are multiple worksheets, the user selects the worksheet
+    containing the data to analyze.
+    """
+
+    try:
+
+        file.seek(0)
+
+        excel_file = pd.ExcelFile(file)
+
+        sheet_names = excel_file.sheet_names
+
+        if not sheet_names:
+
+            st.error(
+                "❌ No worksheets were found in the Excel file."
+            )
+
+            return None
+
+        # One sheet = automatically use it
+        if len(sheet_names) == 1:
+            return sheet_names[0]
+
+        # Multiple sheets = ask the user
+        return st.selectbox(
+            label or t("Select Worksheet"),
+            sheet_names,
+            key=key
+        )
+
+    except Exception as error:
+
+        st.error(
+            f"❌ Error reading Excel worksheets: {error}"
+        )
+
+        return None
+
+
+# =========================================================
 # EXCEL TEMPLATE HELPERS
 # =========================================================
 def save_workbook_to_bytes(data, sheet_name="Assessment"):
@@ -553,6 +604,7 @@ def save_workbook_to_bytes(data, sheet_name="Assessment"):
     from openpyxl import Workbook
 
     wb = Workbook()
+
     ws = wb.active
     ws.title = sheet_name
 
@@ -560,7 +612,9 @@ def save_workbook_to_bytes(data, sheet_name="Assessment"):
         ws.append(row)
 
     buffer = io.BytesIO()
+
     wb.save(buffer)
+
     buffer.seek(0)
 
     return buffer.getvalue()
@@ -685,6 +739,7 @@ def map_template():
     }
 
     df = pd.DataFrame(data)
+
     buffer = io.BytesIO()
 
     with pd.ExcelWriter(
@@ -706,7 +761,7 @@ def map_template():
 # =========================================================
 # READ OBJECTIVES FILE
 # =========================================================
-def read_objectives_file(file):
+def read_objectives_file(file, sheet_name=0):
 
     try:
 
@@ -714,6 +769,7 @@ def read_objectives_file(file):
 
         meta_raw = pd.read_excel(
             file,
+            sheet_name=sheet_name,
             nrows=1,
             header=None
         )
@@ -739,6 +795,7 @@ def read_objectives_file(file):
 
         df = pd.read_excel(
             file,
+            sheet_name=sheet_name,
             header=1
         )
 
@@ -791,6 +848,7 @@ def read_objectives_file(file):
             if max_value > 0:
 
                 valid_cols.append(column)
+
                 total_max += max_value
 
         if not valid_cols:
@@ -844,7 +902,7 @@ def read_objectives_file(file):
 # =========================================================
 # READ TOTAL FILE
 # =========================================================
-def read_total_file(file):
+def read_total_file(file, sheet_name=0):
 
     try:
 
@@ -852,6 +910,7 @@ def read_total_file(file):
 
         raw = pd.read_excel(
             file,
+            sheet_name=sheet_name,
             header=None
         )
 
@@ -956,7 +1015,7 @@ def read_total_file(file):
 # =========================================================
 # READ GAPS FILE
 # =========================================================
-def read_gaps_file(file):
+def read_gaps_file(file, sheet_name=0):
 
     try:
 
@@ -964,6 +1023,7 @@ def read_gaps_file(file):
 
         raw = pd.read_excel(
             file,
+            sheet_name=sheet_name,
             header=None
         )
 
@@ -1053,6 +1113,7 @@ def read_gaps_file(file):
             return None, None
 
         internal_column = internal_columns[0]
+
         map_column = map_columns[0]
 
         data[internal_column] = pd.to_numeric(
@@ -1093,11 +1154,15 @@ def read_gaps_file(file):
 # =========================================================
 # READ SECTION FILE
 # =========================================================
-def read_section_file(file):
+def read_section_file(file, sheet_name=0):
 
-    meta, df = read_objectives_file(file)
+    meta, df = read_objectives_file(
+        file,
+        sheet_name=sheet_name
+    )
 
     if meta is None or df is None:
+
         return (
             None,
             None,
@@ -1112,6 +1177,7 @@ def read_section_file(file):
 
         raw_full = pd.read_excel(
             file,
+            sheet_name=sheet_name,
             header=1
         )
 
@@ -1147,14 +1213,7 @@ def read_section_file(file):
             "points for objectives"
         )
 
-        if points_mask.any():
-
-            max_row = (
-                raw_full[points_mask]
-                .iloc[0]
-            )
-
-        else:
+        if not points_mask.any():
 
             return (
                 None,
@@ -1164,25 +1223,34 @@ def read_section_file(file):
                 None
             )
 
-        obj_max = {}
-        obj_desc = {}
+        points_row = raw_full[
+            points_mask
+        ].iloc[0]
 
-        for column in obj_names:
+        objective_max = {}
+
+        objective_descriptions = {}
+
+        for objective in obj_names:
 
             try:
 
-                obj_max[column] = float(
-                    max_row[column]
+                maximum = float(
+                    points_row[objective]
                 )
 
             except (ValueError, TypeError):
 
-                obj_max[column] = 0
+                maximum = 0
+
+            objective_max[
+                objective
+            ] = maximum
 
             if desc_row is not None:
 
                 description = str(
-                    desc_row[column]
+                    desc_row[objective]
                 ).strip()
 
                 if (
@@ -1192,23 +1260,25 @@ def read_section_file(file):
                 ):
 
                     description = str(
-                        column
+                        objective
                     )
 
             else:
 
                 description = str(
-                    column
+                    objective
                 )
 
-            obj_desc[column] = description
+            objective_descriptions[
+                objective
+            ] = description
 
         return (
             meta,
             df,
             obj_names,
-            obj_max,
-            obj_desc
+            objective_max,
+            objective_descriptions
         )
 
     except Exception:
@@ -1227,22 +1297,17 @@ def read_section_file(file):
 # =========================================================
 if page == "🏠 Home":
 
-    if os.path.exists("logo.png"):
-
-        st.image(
-            "logo.png",
-            width=120
-        )
-
     st.title(
         t("Assessment Analysis")
     )
 
-    st.markdown(
-        f"### {t('Student Assessment & Achievement Dashboard')}"
+    st.subheader(
+        t(
+            "Student Assessment & Achievement Dashboard"
+        )
     )
 
-    st.markdown(
+    st.write(
         t(
             "Analyze MAP, internal assessments, grades, "
             "and student performance in seconds."
@@ -1251,16 +1316,16 @@ if page == "🏠 Home":
 
     st.markdown("---")
 
-    st.markdown(
-        f"### {t('📌 How to use')}"
+    st.header(
+        t("📌 How to use")
     )
 
     c1, c2, c3 = st.columns(3)
 
     with c1:
 
-        st.markdown(
-            f"### {t('① Upload Data')}"
+        st.subheader(
+            t("① Upload Data")
         )
 
         st.write(
@@ -1271,8 +1336,8 @@ if page == "🏠 Home":
 
     with c2:
 
-        st.markdown(
-            f"### {t('② Choose Analysis')}"
+        st.subheader(
+            t("② Choose Analysis")
         )
 
         st.write(
@@ -1283,8 +1348,8 @@ if page == "🏠 Home":
 
     with c3:
 
-        st.markdown(
-            f"### {t('③ View Insights')}"
+        st.subheader(
+            t("③ View Insights")
         )
 
         st.write(
@@ -1310,67 +1375,46 @@ elif page == "📊 Overview":
         t("📊 Assessment Analysis Overview")
     )
 
-    st.markdown(
+    st.write(
         t(
-            "The Assessment Analysis tool is designed to help "
-            "teachers, coordinators, and school leaders analyze "
-            "student achievement quickly and consistently."
+            "The Assessment Analysis tool is designed "
+            "to help teachers, coordinators, and school "
+            "leaders analyze student achievement quickly "
+            "and consistently."
         )
     )
 
     st.markdown("---")
 
-    c1, c2, c3 = st.columns(3)
-
-    with c1:
-
-        st.subheader(
-            t("📝 Objective Analysis")
+    st.write(
+        "• "
+        + t(
+            "Analyze one assessment at a time using "
+            "learning objectives and student marks."
         )
-
-        st.write(
-            t(
-                "Analyze one assessment at a time using "
-                "learning objectives and student marks."
-            )
-        )
-
-    with c2:
-
-        st.subheader(
-            t("📈 Class Total Average Analysis")
-        )
-
-        st.write(
-            t(
-                "Compare multiple assessments for the same "
-                "class and monitor the class average progress "
-                "over time."
-            )
-        )
-
-    with c3:
-
-        st.subheader(
-            t("🎯 Achievement & Gaps")
-        )
-
-        st.write(
-            t(
-                "Compare Internal Assessment results with "
-                "MAP Percentile in one sheet to identify "
-                "achievement gaps."
-            )
-        )
-
-    st.markdown("---")
-
-    st.subheader(
-        t("🗺️ MAP Analysis")
     )
 
     st.write(
-        t(
+        "• "
+        + t(
+            "Compare multiple assessments for the same "
+            "class and monitor the class average progress "
+            "over time."
+        )
+    )
+
+    st.write(
+        "• "
+        + t(
+            "Compare Internal Assessment results with "
+            "MAP Percentile in one sheet to identify "
+            "achievement gaps."
+        )
+    )
+
+    st.write(
+        "• "
+        + t(
             "The MAP Analysis section allows you to compare "
             "previous and current RIT scores, growth, and "
             "percentile performance."
@@ -1387,17 +1431,17 @@ elif page == "📝 Objective Analysis":
         t("📝 Objective Analysis")
     )
 
-    st.markdown(
+    st.write(
         t(
-            "Analyze a single assessment based on learning "
-            "objectives and student marks."
+            "Analyze a single assessment based on "
+            "learning objectives and student marks."
         )
     )
 
     st.download_button(
         t("📥 Download Excel Template"),
         objectives_template(),
-        "Student_Analysis_Template.xlsx",
+        "Objective_Analysis_Template.xlsx",
         mime=(
             "application/vnd.openxmlformats-officedocument."
             "spreadsheetml.sheet"
@@ -1429,8 +1473,18 @@ elif page == "📝 Objective Analysis":
 
     if up_file:
 
+        selected_sheet = get_excel_sheet(
+            up_file,
+            "sheet_single_objective",
+            t("Select Worksheet")
+        )
+
+        if selected_sheet is None:
+            st.stop()
+
         meta, parsed_df = read_objectives_file(
-            up_file
+            up_file,
+            sheet_name=selected_sheet
         )
 
         if meta is None or parsed_df is None:
@@ -1480,6 +1534,7 @@ elif page == "📝 Objective Analysis":
 
         raw = pd.read_excel(
             up_file,
+            sheet_name=selected_sheet,
             header=1
         )
 
@@ -1501,6 +1556,7 @@ elif page == "📝 Objective Analysis":
         else:
 
             desc_row = None
+
             raw_students = raw.copy()
 
         first_column = raw_students.columns[0]
@@ -2219,15 +2275,28 @@ elif page == "📈 Class Total Average Analysis":
     if all(assessment_files):
 
         metadata_list = []
+
         merged = None
+
         percentage_columns = []
 
         for index, file in enumerate(
             assessment_files
         ):
 
+            selected_sheet = get_excel_sheet(
+                file,
+                f"sheet_assessment_{index}",
+                f"{t('Select Worksheet')} - "
+                f"{t('Assessment')} {index + 1}"
+            )
+
+            if selected_sheet is None:
+                st.stop()
+
             meta, df = read_objectives_file(
-                file
+                file,
+                sheet_name=selected_sheet
             )
 
             if meta is None or df is None:
@@ -2585,8 +2654,18 @@ elif page == "🗺️ MAP Analysis":
 
         try:
 
+            selected_sheet = get_excel_sheet(
+                map_file,
+                "sheet_map",
+                t("Select Worksheet")
+            )
+
+            if selected_sheet is None:
+                st.stop()
+
             map_df = pd.read_excel(
-                map_file
+                map_file,
+                sheet_name=selected_sheet
             )
 
             required_columns = [
@@ -2882,8 +2961,18 @@ elif page == "🎯 Achievement & Gaps":
 
     if gaps_file:
 
+        selected_sheet = get_excel_sheet(
+            gaps_file,
+            "sheet_gaps",
+            t("Select Worksheet")
+        )
+
+        if selected_sheet is None:
+            st.stop()
+
         metadata, gaps_df = read_gaps_file(
-            gaps_file
+            gaps_file,
+            sheet_name=selected_sheet
         )
 
         if metadata is None or gaps_df is None:
@@ -3191,13 +3280,26 @@ elif page == "📑 Reports":
                     1
                 ):
 
+                    selected_sheet = get_excel_sheet(
+                        file,
+                        f"sheet_section_objectives_{index}",
+                        f"{t('Select Worksheet')} - "
+                        f"{t('Class')} {index}"
+                    )
+
+                    if selected_sheet is None:
+                        st.stop()
+
                     (
                         metadata,
                         section_df,
                         objective_names,
                         objective_max,
                         objective_descriptions
-                    ) = read_section_file(file)
+                    ) = read_section_file(
+                        file,
+                        sheet_name=selected_sheet
+                    )
 
                     if metadata is None:
 
@@ -3284,8 +3386,6 @@ elif page == "📑 Reports":
                     #
                     # Every objective is converted independently
                     # to a percentage of its own maximum.
-                    # This makes comparison fair even if objectives
-                    # have different maximum marks.
                     # -------------------------------------------------
                     objective_average = {}
 
@@ -3454,7 +3554,6 @@ elif page == "📑 Reports":
                             objective
                     }
 
-                    # Description from first class
                     description = sections_data[0][
                         "obj_desc"
                     ].get(
@@ -3466,9 +3565,6 @@ elif page == "📑 Reports":
 
                     class_percentages = {}
 
-                    # -------------------------------------------------
-                    # ADD EVERY CLASS PERCENTAGE
-                    # -------------------------------------------------
                     for section in sections_data:
 
                         percentage = section[
@@ -3495,9 +3591,6 @@ elif page == "📑 Reports":
                             else None
                         )
 
-                    # -------------------------------------------------
-                    # DETERMINE BETTER CLASS
-                    # -------------------------------------------------
                     valid_classes = {
                         class_name: value
                         for class_name, value
@@ -3531,7 +3624,8 @@ elif page == "📑 Reports":
 
                             difference = (
                                 max_value
-                                - min(
+                                -
+                                min(
                                     valid_classes.values()
                                 )
                             )
@@ -3748,14 +3842,28 @@ elif page == "📑 Reports":
                 ):
 
                     # -------------------------------------------------
-                    # DETECT FILE TYPE
+                    # SELECT WORKSHEET
                     # -------------------------------------------------
                     file.seek(0)
 
+                    selected_sheet = get_excel_sheet(
+                        file,
+                        f"sheet_total_report_{idx}",
+                        f"{t('Select Worksheet')} - "
+                        f"{t('Class')} {idx}"
+                    )
+
+                    if selected_sheet is None:
+                        st.stop()
+
+                    # -------------------------------------------------
+                    # DETECT FILE TYPE
+                    # -------------------------------------------------
                     try:
 
                         raw_check = pd.read_excel(
                             file,
+                            sheet_name=selected_sheet,
                             header=1
                         )
 
@@ -3798,7 +3906,8 @@ elif page == "📑 Reports":
                     if has_total_row:
 
                         meta, df = read_objectives_file(
-                            file
+                            file,
+                            sheet_name=selected_sheet
                         )
 
                     # -------------------------------------------------
@@ -3807,7 +3916,8 @@ elif page == "📑 Reports":
                     else:
 
                         meta, df = read_total_file(
-                            file
+                            file,
+                            sheet_name=selected_sheet
                         )
 
                     if meta is None or df is None:
