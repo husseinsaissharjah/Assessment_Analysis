@@ -38,7 +38,7 @@ TRANSLATIONS = {
         "📈 Class Total Average Analysis": "📈 تحليل متوسط الصف",
         "🗺️ MAP Analysis": "🗺️ تحليل MAP",
         "🎯 Achievement & Gaps": "🎯 الإنجاز والفجوات",
-        "📑 Reports": "📑 التقارير",
+        "🔍 Comparison Between Sections": "🔍 المقارنة بين الصفوف",
 
         # Home
         "Assessment Analysis": "تحليل التقييم",
@@ -462,7 +462,7 @@ with st.sidebar:
         "📈 Class Total Average Analysis",
         "🗺️ MAP Analysis",
         "🎯 Achievement & Gaps",
-        "📑 Reports"
+        "🔍 Comparison Between Sections"
     ]
 
     for p in pages:
@@ -3397,9 +3397,9 @@ elif page == "🎯 Achievement & Gaps":
 
 
 # =========================================================
-# REPORTS
+#  Comparison Between Section
 # =========================================================
-elif page == "📑 Reports":
+elif page == "🔍 Comparison Between Sections":
 
     service = st.radio(
         t("Select Service"),
