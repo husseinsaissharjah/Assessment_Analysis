@@ -72,6 +72,8 @@ TRANSLATIONS = {
             "قارن نتائج التقييم الداخلي مع النسبة المئوية لـ MAP في ورقة واحدة لتحديد فجوات الإنجاز.",
         "The MAP Analysis section allows you to compare previous and current RIT scores, growth, and percentile performance.":
             "يسمح قسم تحليل MAP بمقارنة درجات RIT السابقة والحالية، والنمو، وأداء النسبة المئوية.",
+      "Compare Between Sections":
+    "مقارنة أداء الأقسام المختلفة من خلال تحليل الدرجات والنتائج، وتحديد نقاط القوة والفجوات، ومعرفة أي قسم يحقق أداءً أفضل في كل هدف أو معيار.",
 
         # General
         "👩‍🏫 Teacher:": "👩‍🏫 المعلم:",
